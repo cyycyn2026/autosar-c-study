@@ -869,7 +869,7 @@ Std_ReturnType PduBuffer_WriteU16(
   }
 ];
 
-const ADMIN_KEY = "autosar-admin-2026";
+const ADMIN_KEY = "adm-2c9kX7vLqN8wR5tY3mP4";
 const currentStudentKey = "autosar-c-current-student";
 const recordsKey = "autosar-c-learning-records";
 
