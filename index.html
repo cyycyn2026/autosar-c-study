@@ -18,7 +18,43 @@
           <div id="progressBar" class="progress-bar"></div>
         </div>
       </div>
+      <div class="user-tools">
+        <span id="studentBadge" class="student-badge">未登录</span>
+        <button id="switchStudentBtn" class="tool-btn" type="button">切换</button>
+        <button id="adminBtn" class="tool-btn" type="button">管理</button>
+      </div>
     </header>
+
+    <section id="loginOverlay" class="overlay" aria-label="姓名登录">
+      <div class="dialog">
+        <p class="eyebrow">开始学习前</p>
+        <h2>请输入你的姓名</h2>
+        <p>系统会按照姓名保存学习进度、练习提交和小测记录，下一次输入同样姓名即可继续。</p>
+        <form id="loginForm" class="login-form">
+          <label for="studentNameInput">姓名</label>
+          <input id="studentNameInput" autocomplete="name" placeholder="例如：张三" required />
+          <button class="ghost-btn" type="submit">进入学习</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="adminPanel" class="overlay is-hidden" aria-label="管理面板">
+      <div class="dialog admin-dialog">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow">管理员</p>
+            <h2>学习记录</h2>
+          </div>
+          <button id="closeAdminBtn" class="tool-btn" type="button">关闭</button>
+        </div>
+        <form id="adminLoginForm" class="login-form">
+          <label for="adminKeyInput">管理密钥</label>
+          <input id="adminKeyInput" type="password" placeholder="输入管理密钥" />
+          <button class="ghost-btn" type="submit">查看记录</button>
+        </form>
+        <div id="adminRecords" class="admin-records"></div>
+      </div>
+    </section>
 
     <main class="layout">
       <aside class="sidebar" aria-label="课程导航">
@@ -87,6 +123,7 @@
           </label>
         </div>
         <div class="module-body"></div>
+        <div class="practice-lab"></div>
         <div class="quiz">
           <div class="quiz-head">
             <h3>本节小测</h3>

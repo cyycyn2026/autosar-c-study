@@ -869,32 +869,151 @@ Std_ReturnType PduBuffer_WriteU16(
   }
 ];
 
-const stateKey = "autosar-c-foundation-state";
-const quizKey = "autosar-c-foundation-quiz";
-const oldStateKey = "autosar-c-week1-state";
-const oldQuizKey = "autosar-c-week1-quiz";
+const ADMIN_KEY = "autosar-admin-2026";
+const currentStudentKey = "autosar-c-current-student";
+const recordsKey = "autosar-c-learning-records";
 
-const savedState = {
-  ...JSON.parse(localStorage.getItem(oldStateKey) || "{}"),
-  ...JSON.parse(localStorage.getItem(stateKey) || "{}")
+const practiceLabs = {
+  "day1-types": {
+    prompt: "写一段 C 代码：打印 uint8_t、uint16_t、uint32_t 和 int 的 sizeof，并定义一个 CAN 报文结构体。",
+    starter: "#include <stdio.h>\n#include <stdint.h>\n\nint main(void)\n{\n    /* 在这里写代码 */\n    return 0;\n}",
+    checks: ["sizeof", "uint8_t", "uint16_t", "uint32_t", "struct"],
+    reference: "#include <stdio.h>\n#include <stdint.h>\n\ntypedef struct {\n    uint32_t id;\n    uint8_t dlc;\n    uint8_t data[8];\n} CanFrameType;\n\nint main(void)\n{\n    printf(\"sizeof(uint8_t) = %zu\\n\", sizeof(uint8_t));\n    printf(\"sizeof(uint16_t) = %zu\\n\", sizeof(uint16_t));\n    printf(\"sizeof(uint32_t) = %zu\\n\", sizeof(uint32_t));\n    printf(\"sizeof(int) = %zu\\n\", sizeof(int));\n    printf(\"sizeof(CanFrameType) = %zu\\n\", sizeof(CanFrameType));\n    return 0;\n}"
+  },
+  "day2-storage": {
+    prompt: "写一个 Counter 模块思路：内部用 static 保存计数，提供 Counter_Inc 和 Counter_Get。",
+    starter: "#include <stdint.h>\n\n/* 在这里定义内部计数器和函数 */",
+    checks: ["static", "Counter_Inc", "Counter_Get", "uint32_t"],
+    reference: "#include <stdint.h>\n\nstatic uint32_t counter = 0U;\n\nvoid Counter_Inc(void)\n{\n    counter++;\n}\n\nuint32_t Counter_Get(void)\n{\n    return counter;\n}"
+  },
+  "day3-qualifiers": {
+    prompt: "写一个 volatile flag 示例：一个函数设置 flag，另一个函数轮询 flag。",
+    starter: "#include <stdint.h>\n\n/* volatile flag 示例 */",
+    checks: ["volatile", "while", "flag", "uint8_t"],
+    reference: "#include <stdint.h>\n\nstatic volatile uint8_t flag = 0U;\n\nvoid Isr_SetFlag(void)\n{\n    flag = 1U;\n}\n\nvoid MainLoop(void)\n{\n    while (flag == 0U) {\n        /* wait */\n    }\n}"
+  },
+  "day4-conversion": {
+    prompt: "写一个安全的 CopyData 函数：检查空指针和长度，避免越界。",
+    starter: "#include <stdint.h>\n\n#define E_OK 0U\n#define E_NOT_OK 1U\n#define NULL_PTR ((void *)0)\n\ntypedef uint8_t Std_ReturnType;\n\n/* 写 CopyData */",
+    checks: ["Std_ReturnType", "NULL_PTR", "len", "dstSize", "for"],
+    reference: "Std_ReturnType CopyData(uint8_t *dst, uint16_t dstSize, const uint8_t *src, uint16_t len)\n{\n    Std_ReturnType ret = E_NOT_OK;\n\n    if ((dst != NULL_PTR) && (src != NULL_PTR) && (len <= dstSize)) {\n        for (uint16_t i = 0U; i < len; i++) {\n            dst[i] = src[i];\n        }\n        ret = E_OK;\n    }\n\n    return ret;\n}"
+  },
+  "day5-review": {
+    prompt: "实现 Buffer_CountValue：统计 buffer 中某个字节出现次数，要求检查空指针。",
+    starter: "#include <stdint.h>\n#define NULL_PTR ((void *)0)\n\nuint16_t Buffer_CountValue(const uint8_t *buf, uint16_t len, uint8_t value)\n{\n    /* 在这里写代码 */\n}",
+    checks: ["const uint8_t", "NULL_PTR", "for", "count", "return"],
+    reference: "uint16_t Buffer_CountValue(const uint8_t *buf, uint16_t len, uint8_t value)\n{\n    uint16_t count = 0U;\n\n    if (buf != NULL_PTR) {\n        for (uint16_t i = 0U; i < len; i++) {\n            if (buf[i] == value) {\n                count++;\n            }\n        }\n    }\n\n    return count;\n}"
+  },
+  "week2-address": {
+    prompt: "写代码打印 a、&a、p、&p，并解释指针 p 保存了什么。",
+    starter: "#include <stdio.h>\n\nint main(void)\n{\n    int a = 10;\n    /* 定义指针并打印 */\n    return 0;\n}",
+    checks: ["int *", "&a", "&p", "%p", "(void *)"],
+    reference: "int main(void)\n{\n    int a = 10;\n    int *p = &a;\n\n    printf(\"a = %d\\n\", a);\n    printf(\"&a = %p\\n\", (void *)&a);\n    printf(\"p = %p\\n\", (void *)p);\n    printf(\"&p = %p\\n\", (void *)&p);\n    return 0;\n}"
+  },
+  "week2-deref": {
+    prompt: "写 SetValue 和 Swap，要求所有指针使用前检查 NULL_PTR。",
+    starter: "#include <stdint.h>\n#define NULL_PTR ((void *)0)\n\n/* 写 SetValue 和 Swap */",
+    checks: ["SetValue", "Swap", "NULL_PTR", "*", "uint8_t"],
+    reference: "void SetValue(uint16_t *value, uint16_t newValue)\n{\n    if (value != NULL_PTR) {\n        *value = newValue;\n    }\n}\n\nvoid Swap(uint8_t *a, uint8_t *b)\n{\n    if ((a != NULL_PTR) && (b != NULL_PTR)) {\n        uint8_t temp = *a;\n        *a = *b;\n        *b = temp;\n    }\n}"
+  },
+  "week2-array": {
+    prompt: "写 FindByte：在 const buffer 中查找目标字节，找到返回下标，找不到返回 -1。",
+    starter: "#include <stdint.h>\n#define NULL_PTR ((void *)0)\n\nint16_t FindByte(const uint8_t *data, uint16_t len, uint8_t target)\n{\n    /* 在这里写代码 */\n}",
+    checks: ["const uint8_t", "NULL_PTR", "for", "target", "return"],
+    reference: "int16_t FindByte(const uint8_t *data, uint16_t len, uint8_t target)\n{\n    int16_t result = -1;\n\n    if (data != NULL_PTR) {\n        for (uint16_t i = 0U; i < len; i++) {\n            if (data[i] == target) {\n                result = (int16_t)i;\n                break;\n            }\n        }\n    }\n\n    return result;\n}"
+  },
+  "week2-params": {
+    prompt: "写 ReadU16BigEndian：从 data[offset] 和 data[offset+1] 读取 uint16_t，检查空指针和长度。",
+    starter: "#include <stdint.h>\n#define E_OK 0U\n#define E_NOT_OK 1U\n#define NULL_PTR ((void *)0)\ntypedef uint8_t Std_ReturnType;\n\n/* 写 ReadU16BigEndian */",
+    checks: ["Std_ReturnType", "const uint8_t", "offset", "value", "NULL_PTR"],
+    reference: "Std_ReturnType ReadU16BigEndian(const uint8_t *data, uint16_t len, uint16_t offset, uint16_t *value)\n{\n    Std_ReturnType ret = E_NOT_OK;\n\n    if ((data != NULL_PTR) && (value != NULL_PTR) && (offset < len) && ((uint16_t)(offset + 1U) < len)) {\n        *value = (uint16_t)(((uint16_t)data[offset] << 8U) | data[offset + 1U]);\n        ret = E_OK;\n    }\n\n    return ret;\n}"
+  },
+  "week2-danger": {
+    prompt: "写 PduBuffer_Copy：检查 dst、src、copiedLen 和长度，成功后复制并返回 E_OK。",
+    starter: "#include <stdint.h>\n#define E_OK 0U\n#define E_NOT_OK 1U\n#define NULL_PTR ((void *)0)\ntypedef uint8_t Std_ReturnType;\n\n/* 写 PduBuffer_Copy */",
+    checks: ["PduBuffer_Copy", "copiedLen", "dstSize", "srcLen", "NULL_PTR"],
+    reference: "Std_ReturnType PduBuffer_Copy(uint8_t *dst, uint16_t dstSize, const uint8_t *src, uint16_t srcLen, uint16_t *copiedLen)\n{\n    Std_ReturnType ret = E_NOT_OK;\n\n    if ((dst != NULL_PTR) && (src != NULL_PTR) && (copiedLen != NULL_PTR) && (srcLen <= dstSize)) {\n        for (uint16_t i = 0U; i < srcLen; i++) {\n            dst[i] = src[i];\n        }\n        *copiedLen = srcLen;\n        ret = E_OK;\n    }\n\n    return ret;\n}"
+  }
 };
-const savedQuiz = {
-  ...JSON.parse(localStorage.getItem(oldQuizKey) || "{}"),
-  ...JSON.parse(localStorage.getItem(quizKey) || "{}")
-};
+
+let currentStudent = "";
+let savedState = {};
+let savedQuiz = {};
+let savedLabs = {};
 
 const navList = document.querySelector("#navList");
 const moduleContainer = document.querySelector("#moduleContainer");
 const template = document.querySelector("#moduleTemplate");
 const progressText = document.querySelector("#progressText");
 const progressBar = document.querySelector("#progressBar");
+const loginOverlay = document.querySelector("#loginOverlay");
+const loginForm = document.querySelector("#loginForm");
+const studentNameInput = document.querySelector("#studentNameInput");
+const studentBadge = document.querySelector("#studentBadge");
+const switchStudentBtn = document.querySelector("#switchStudentBtn");
+const adminBtn = document.querySelector("#adminBtn");
+const adminPanel = document.querySelector("#adminPanel");
+const closeAdminBtn = document.querySelector("#closeAdminBtn");
+const adminLoginForm = document.querySelector("#adminLoginForm");
+const adminKeyInput = document.querySelector("#adminKeyInput");
+const adminRecords = document.querySelector("#adminRecords");
+
+function readRecords() {
+  return JSON.parse(localStorage.getItem(recordsKey) || "{}");
+}
+
+function writeRecords(records) {
+  localStorage.setItem(recordsKey, JSON.stringify(records));
+}
+
+function normalizeName(name) {
+  return name.trim().replace(/\s+/g, " ");
+}
+
+function loadStudent(name) {
+  const records = readRecords();
+  currentStudent = normalizeName(name);
+  const record = records[currentStudent] || {
+    state: {},
+    quiz: {},
+    labs: {},
+    lastSeen: new Date().toISOString()
+  };
+  savedState = record.state || {};
+  savedQuiz = record.quiz || {};
+  savedLabs = record.labs || {};
+  record.lastSeen = new Date().toISOString();
+  records[currentStudent] = record;
+  writeRecords(records);
+  localStorage.setItem(currentStudentKey, currentStudent);
+  studentBadge.textContent = currentStudent;
+  loginOverlay.classList.add("is-hidden");
+}
+
+function saveStudentRecord() {
+  if (!currentStudent) {
+    return;
+  }
+  const records = readRecords();
+  records[currentStudent] = {
+    state: savedState,
+    quiz: savedQuiz,
+    labs: savedLabs,
+    lastSeen: new Date().toISOString()
+  };
+  writeRecords(records);
+}
 
 function saveState() {
-  localStorage.setItem(stateKey, JSON.stringify(savedState));
+  saveStudentRecord();
 }
 
 function saveQuiz() {
-  localStorage.setItem(quizKey, JSON.stringify(savedQuiz));
+  saveStudentRecord();
+}
+
+function saveLabs() {
+  saveStudentRecord();
 }
 
 function updateProgress() {
@@ -962,11 +1081,102 @@ function renderQuiz(module, quizItems, resultEl) {
   });
 
   if (savedQuiz[module.id]) {
-    resultEl.textContent = savedQuiz[module.id];
+    const saved = savedQuiz[module.id];
+    resultEl.textContent = typeof saved === "string"
+      ? saved
+      : `上次得分：${saved.score} / ${saved.total}。重新提交可刷新解析。`;
   }
 }
 
+function renderPractice(module, labEl) {
+  const lab = practiceLabs[module.id];
+  if (!lab) {
+    labEl.remove();
+    return;
+  }
+  const last = savedLabs[module.id]?.code || lab.starter;
+  labEl.innerHTML = `
+    <div class="lab-head">
+      <div>
+        <p class="module-kicker">代码练习</p>
+        <h3>终端练习区</h3>
+        <p>${lab.prompt}</p>
+      </div>
+    </div>
+    <div class="code-terminal">
+      <textarea spellcheck="false">${last}</textarea>
+      <div class="lab-actions">
+        <button class="lab-btn submit-lab" type="button">提交练习</button>
+        <button class="lab-btn secondary show-reference" type="button">查看参考答案</button>
+      </div>
+      <div class="lab-result" aria-live="polite">${savedLabs[module.id]?.feedback || "这里不会真正编译 C 代码，会检查关键结构是否齐全，并保存你的提交。"}</div>
+      <pre class="reference-answer"><code>${escapeHtml(lab.reference)}</code></pre>
+    </div>
+  `;
+
+  const textarea = labEl.querySelector("textarea");
+  const result = labEl.querySelector(".lab-result");
+  const reference = labEl.querySelector(".reference-answer");
+  labEl.querySelector(".submit-lab").addEventListener("click", () => {
+    const code = textarea.value;
+    const missing = lab.checks.filter((token) => !code.includes(token));
+    const feedback = missing.length === 0
+      ? "提交完成：关键结构都出现了。下一步建议你逐行解释每个变量、指针和边界检查。"
+      : `提交完成：还建议补充这些关键点：${missing.join("、")}。`;
+    result.textContent = feedback;
+    savedLabs[module.id] = {
+      code,
+      feedback,
+      submittedAt: new Date().toISOString()
+    };
+    saveLabs();
+  });
+  labEl.querySelector(".show-reference").addEventListener("click", () => {
+    reference.classList.toggle("is-visible");
+  });
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function explainQuestion(question, correctOption) {
+  const q = question.q;
+  if (q.includes("uint8_t") && q.includes("范围")) {
+    return "uint8_t 是无符号 8 位整数，8 个 bit 一共能表示 256 个值，所以范围是 0 到 255。";
+  }
+  if (q.includes("sizeof")) {
+    return "sizeof 返回对象或类型占用的字节数。数组名和指针变量在 sizeof 下尤其要区分：数组得到整体大小，指针得到指针变量大小。";
+  }
+  if (q.includes("static")) {
+    return "static 用在文件作用域函数或变量上，会限制符号只在当前源文件可见；用在局部变量上，会延长变量生命周期。";
+  }
+  if (q.includes("extern")) {
+    return "extern 是声明，表示定义在别处；真正的全局变量定义应该只放在一个 .c 文件里，避免重复定义。";
+  }
+  if (q.includes("volatile")) {
+    return "volatile 告诉编译器每次都要真实访问内存，适合寄存器、中断 flag、DMA 更新区域；它不是锁，也不保证原子性。";
+  }
+  if (q.includes("const")) {
+    return "const 表达不应通过这个接口修改数据。输入 buffer 常写成 const uint8_t *，这样能保护调用者数据。";
+  }
+  if (q.includes("指针") || q.includes("&a") || q.includes("*p") || q.includes("NULL_PTR")) {
+    return "指针保存地址，& 用来取地址，* 用来解引用。解引用前必须保证指针指向有效对象，空指针和未初始化指针都不能解引用。";
+  }
+  if (q.includes("数组") || q.includes("buffer") || q.includes("越界") || q.includes("len")) {
+    return "buffer 函数必须同时传长度，因为指针本身不知道后面有多少元素。访问数组前要检查边界，避免越界读写。";
+  }
+  if (q.includes("Std_ReturnType") || q.includes("输出")) {
+    return "AUTOSAR 风格接口常用返回值表示成功失败，真正的数据通过输出指针带出；输出指针必须检查空指针和容量。";
+  }
+  return `正确答案是“${correctOption}”。这道题考的是本节的核心概念：先判断数据在哪里、谁能修改它、边界是否安全。`;
+}
+
 function renderModules() {
+  moduleContainer.innerHTML = "";
   modules.forEach((module) => {
     const node = template.content.firstElementChild.cloneNode(true);
     node.id = module.id;
@@ -982,21 +1192,50 @@ function renderModules() {
       updateProgress();
     });
 
+    renderPractice(module, node.querySelector(".practice-lab"));
+
     const quizItems = node.querySelector(".quiz-items");
     const resultEl = node.querySelector(".quiz-result");
     renderQuiz(module, quizItems, resultEl);
 
     node.querySelector(".ghost-btn").addEventListener("click", () => {
       let score = 0;
+      const feedback = [];
       module.quiz.forEach((question, index) => {
         const selected = node.querySelector(`input[name="${module.id}-${index}"]:checked`);
+        const selectedValue = selected ? Number(selected.value) : null;
+        const isCorrect = selectedValue === question.answer;
+        const correctOption = question.options[question.answer];
         if (selected && Number(selected.value) === question.answer) {
           score++;
         }
+        feedback.push({
+          index,
+          selected: selectedValue,
+          isCorrect,
+          correctOption,
+          explanation: explainQuestion(question, correctOption)
+        });
       });
       const message = `得分：${score} / ${module.quiz.length}。${score === module.quiz.length ? "很好，这一节可以勾选完成。" : "建议回到上面的讲解，把错题对应的段落再过一遍。"}`;
-      resultEl.textContent = message;
-      savedQuiz[module.id] = message;
+      resultEl.innerHTML = `
+        <div class="quiz-feedback">
+          <strong>${message}</strong>
+          ${feedback.map((item) => `
+            <div class="feedback-item ${item.isCorrect ? "" : "is-wrong"}">
+              <strong>第 ${item.index + 1} 题：${item.isCorrect ? "答对了" : "答错了"}</strong>
+              <p>正确答案：${item.correctOption}</p>
+              <p>${item.explanation}</p>
+            </div>
+          `).join("")}
+        </div>
+      `;
+      savedQuiz[module.id] = {
+        score,
+        total: module.quiz.length,
+        feedback,
+        submittedAt: new Date().toISOString()
+      };
       saveQuiz();
     });
 
@@ -1004,6 +1243,72 @@ function renderModules() {
   });
 }
 
-renderNav();
-renderModules();
-updateProgress();
+function renderAdminRecords() {
+  const records = readRecords();
+  const names = Object.keys(records);
+  if (names.length === 0) {
+    adminRecords.innerHTML = "<p>暂无记录。</p>";
+    return;
+  }
+  adminRecords.innerHTML = names.map((name) => {
+    const record = records[name];
+    const done = Object.values(record.state || {}).filter(Boolean).length;
+    const quizzes = Object.values(record.quiz || {}).filter(Boolean).length;
+    const labs = Object.values(record.labs || {}).filter(Boolean).length;
+    return `
+      <div class="record-card">
+        <strong>${name}</strong>
+        <span>已学 ${done} / ${modules.length}，已交小测 ${quizzes}，已交练习 ${labs}，最近访问 ${new Date(record.lastSeen).toLocaleString()}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+function startAppForStudent(name) {
+  loadStudent(name);
+  if (navList.children.length === 0) {
+    renderNav();
+  }
+  renderModules();
+  updateProgress();
+}
+
+loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const name = normalizeName(studentNameInput.value);
+  if (name) {
+    startAppForStudent(name);
+  }
+});
+
+switchStudentBtn.addEventListener("click", () => {
+  loginOverlay.classList.remove("is-hidden");
+  studentNameInput.value = "";
+  studentNameInput.focus();
+});
+
+adminBtn.addEventListener("click", () => {
+  adminPanel.classList.remove("is-hidden");
+  adminKeyInput.focus();
+});
+
+closeAdminBtn.addEventListener("click", () => {
+  adminPanel.classList.add("is-hidden");
+});
+
+adminLoginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (adminKeyInput.value === ADMIN_KEY) {
+    renderAdminRecords();
+  } else {
+    adminRecords.innerHTML = "<p>密钥不正确。</p>";
+  }
+});
+
+const rememberedStudent = localStorage.getItem(currentStudentKey);
+if (rememberedStudent) {
+  startAppForStudent(rememberedStudent);
+} else {
+  loginOverlay.classList.remove("is-hidden");
+  studentNameInput.focus();
+}
