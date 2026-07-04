@@ -1936,6 +1936,15 @@ function startAppForStudent(name) {
   renderModules();
   updateProgress();
   wrongBookBtn.style.display = "inline-block";
+  loginOverlay.classList.add("is-hidden");
+}
+  loadStudent(name);
+  if (navList.children.length === 0) {
+    renderNav();
+  }
+  renderModules();
+  updateProgress();
+  wrongBookBtn.style.display = "inline-block";
 }
 
 loginForm.addEventListener("submit", (event) => {
