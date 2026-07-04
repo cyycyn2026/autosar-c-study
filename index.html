@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AUTOSAR 嵌入式 C 学习站</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">3 个月 C 基础打牢计划 · 第 1-2 周</p>
+        <h1>AUTOSAR 嵌入式 C 学习站</h1>
+      </div>
+      <div class="progress-panel" aria-label="学习进度">
+        <span id="progressText">0 / 0 已完成</span>
+        <div class="progress-track">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar" aria-label="课程导航">
+        <div class="day-card">
+          <span class="day-label">当前目标</span>
+          <strong>先把类型和指针这两块地基打牢</strong>
+          <p>第 1 周建立类型和内存直觉；第 2 周专攻指针，重点理解地址、解引用、数组、函数参数和危险用法。</p>
+        </div>
+        <nav id="navList" class="nav-list"></nav>
+      </aside>
+
+      <section class="content">
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">适合：有 C 基础，但指针掌握薄弱的人</p>
+            <h2>从“变量在哪里”到“指针指向哪里”</h2>
+            <p>
+              AUTOSAR 项目里的 C 代码看起来常常被宏、类型别名、配置表和编译条件包住。
+              要读懂它，第一步是把类型、存储期、指针、数组和函数参数这些“地基”弄清楚。
+            </p>
+          </div>
+          <div class="memory-map" aria-label="C 程序内存示意">
+            <div class="mem-row flash">
+              <span>Flash</span>
+              <strong>.text</strong>
+              <strong>.rodata</strong>
+              <strong>.data 初值</strong>
+            </div>
+            <div class="mem-row ram">
+              <span>RAM</span>
+              <strong>.data</strong>
+              <strong>.bss</strong>
+              <strong>stack</strong>
+            </div>
+          </div>
+        </section>
+
+        <section id="moduleContainer" class="modules"></section>
+      </section>
+    </main>
+
+    <template id="moduleTemplate">
+      <article class="module">
+        <div class="module-head">
+          <div>
+            <p class="module-kicker"></p>
+            <h2></h2>
+          </div>
+          <label class="done-toggle">
+            <input type="checkbox" />
+            <span>已学习</span>
+          </label>
+        </div>
+        <div class="module-body"></div>
+        <div class="quiz">
+          <div class="quiz-head">
+            <h3>本节小测</h3>
+            <button class="ghost-btn" type="button">提交答案</button>
+          </div>
+          <div class="quiz-items"></div>
+          <p class="quiz-result" aria-live="polite"></p>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
