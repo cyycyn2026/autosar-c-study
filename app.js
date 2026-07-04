@@ -911,7 +911,17 @@ function updateProgress() {
 }
 
 function renderNav() {
+  let currentGroup = "";
   modules.forEach((module) => {
+    const group = module.kicker.startsWith("Week 2") ? "第 2 周 · 指针专项" : "第 1 周 · C 底层基础";
+    if (group !== currentGroup) {
+      currentGroup = group;
+      const groupEl = document.createElement("div");
+      groupEl.className = "nav-group";
+      groupEl.textContent = group;
+      navList.appendChild(groupEl);
+    }
+
     const item = document.createElement("a");
     item.className = "nav-item";
     item.href = `#${module.id}`;
