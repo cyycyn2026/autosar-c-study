@@ -865,7 +865,446 @@ Std_ReturnType PduBuffer_WriteU16(
         options: ["可能破坏其他内存，导致异常或隐蔽错误", "只会自动忽略", "一定会编译失败", "只影响注释"],
         answer: 0
       }
-    ]
+  {
+    id: "week3-struct",
+    kicker: "Week 3 · Day 1",
+    title: "结构体：把不同类型的数据打包在一起",
+    summary: "struct 定义、typedef、访问、初始化、嵌套结构体",
+    body: `
+      <h3>为什么嵌入式里离不开结构体</h3>
+      <p>AUTOSAR 代码里到处都是结构体：CAN 报文结构、PDU 信息结构、DID 配置表、寄存器映射、错误码结构……结构体让你把<strong>逻辑上属于同一事物的数据</strong>打包在一起，而不是用一堆分散的全局变量。</p>
+
+      <h3>基本定义和 typedef</h3>
+      <pre><code>typedef struct {
+    uint32_t id;
+    uint8_t  dlc;
+    uint8_t  data[8];
+} CanPduType;</code></pre>
+      <p>这里 <code>typedef</code> 的意思是：以后直接用 <code>CanPduType</code> 就能声明变量，不需要每次都写 <code>struct</code>。嵌入式里几乎总是配合 <code>typedef</code> 使用。</p>
+
+      <h3>访问成员</h3>
+      <pre><code>CanPduType pdu;
+pdu.id  = 0x123U;
+pdu.dlc = 8U;
+pdu.data[0] = 0xAAU;</code></pre>
+      <p>用点号 <code>.</code> 访问成员。如果是指向结构体的指针，用箭头 <code>-></code>。</p>
+      <pre><code>CanPduType *pPdu = &pdu;
+pPdu->id = 0x123U;   /* 等价于 (*pPdu).id */</code></pre>
+
+      <h3>初始化方式</h3>
+      <pre><code>CanPduType pdu = {
+    .id  = 0x123U,
+    .dlc = 8U,
+    .data = { 0xAAU, 0xBBU }
+};</code></pre>
+      <p>C99 指定初始化（<code>.member = value</code>）在嵌入式里非常推荐，因为可读性好、不容易错位，而且不受字段顺序影响。</p>
+
+      <div class="note">
+        <strong>工程直觉：</strong>
+        看到结构体定义时，先问自己：每个字段占多少字节？整个结构体 sizeof 是多少？有没有 padding？字段顺序会不会影响大小？
+      </div>
+
+      <h3>今天的练习</h3>
+      <div class="practice">
+        <ol>
+          <li>定义一个 <code>DidConfigType</code>，包含 <code>uint16_t did</code>、<code>uint8_t length</code>、<code>uint8_t data[8]</code>。</li>
+          <li>用指定初始化创建两个配置项，然后打印 <code>sizeof(DidConfigType)</code>。</li>
+          <li>写一个函数 <code>DidConfig_GetLength(const DidConfigType *config)</code>，返回 length，要求检查空指针。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+            "q": "typedef struct { ... } CanPduType; 中 typedef 的主要作用是？",
+            "options": [
+                  "让结构体运行更快",
+                  "以后可以直接用 CanPduType 声明变量",
+                  "隐藏结构体内部字段",
+                  "让结构体变成联合体"
+            ],
+            "answer": 1
+      },
+      {
+            "q": "指向结构体的指针 pPdu，访问成员 id 的正确写法是？",
+            "options": [
+                  "pPdu.id",
+                  "pPdu->id",
+                  "pPdu[id]",
+                  "pPdu::id"
+            ],
+            "answer": 1
+      },
+      {
+            "q": "C99 指定初始化 .id = 0x123U 的好处不包括？",
+            "options": [
+                  "不受字段顺序影响",
+                  "可读性好",
+                  "自动编译通过",
+                  "不容易错位"
+            ],
+            "answer": 2
+      },
+      {
+            "q": "const DidConfigType *config 作为参数时，函数可以做什么？",
+            "options": [
+                  "修改 config 指向的对象",
+                  "修改 config 指针本身",
+                  "读取 config 的成员但不能修改",
+                  "删除 config 的内存"
+            ],
+            "answer": 2
+      }
+]
+  },
+  {
+    id: "week3-union",
+    kicker: "Week 3 · Day 2",
+    title: "联合体：共享同一块内存的多种解释方式",
+    summary: "union 定义、大小端、字节访问、协议解析中的实际用途",
+    body: `
+      <h3>联合体最朴素的理解</h3>
+      <p>结构体给每个成员<strong>各分配</strong>一块内存；联合体给所有成员<strong>共享同一块</strong>内存。联合体的大小等于<strong>最大成员</strong>的大小。</p>
+
+      <pre><code>typedef union {
+    uint32_t word;
+    uint8_t  bytes[4];
+} U32AccessType;</code></pre>
+      <p>这个联合体占 4 个字节。你可以通过 <code>word</code> 按 32 位读写，也可以通过 <code>bytes[0]~bytes[3]</code> 按字节逐个访问。二者指向的是同一块物理内存。</p>
+
+      <h3>大小端与联合体</h3>
+      <p>在小端机器上（如大多数 ARM Cortex-M），<code>bytes[0]</code> 是低字节；在大端机器上，<code>bytes[0]</code> 是高字节。联合体本身不处理大小端，它只是给你一种"按字节拆 32 位数"的便捷方式。</p>
+
+      <pre><code>U32AccessType u;
+u.word = 0x12345678U;
+/* 小端：u.bytes[0] = 0x78, u.bytes[1] = 0x56 */</code></pre>
+
+      <div class="warning">
+        <strong>注意：</strong>
+        读取一个联合体成员时，只有最近一次写入的那个成员的值是确定有效的。如果先写 <code>word</code> 再读 <code>bytes</code>，在 C 标准中属于"类型双关"（type punning），虽然在常见嵌入式编译器上通常工作，但严格来说不是标准保证的行为。工程中要确认编译器支持再使用。
+      </div>
+
+      <h3>AUTOSAR 里的典型用途</h3>
+      <p>联合体常用于协议解析：报文既想按 32 位寄存器读写，又想按字节解析。也用于配置表：同一个表项在不同条件下代表不同含义。</p>
+
+      <h3>今天的练习</h3>
+      <div class="practice">
+        <ol>
+          <li>定义一个 <code>RegAccessType</code> union，包含 <code>uint32_t word</code> 和 <code>uint8_t bytes[4]</code>。</li>
+          <li>写一个函数 <code>GetU32Byte(uint32_t value, uint8_t index)</code>，用联合体取出指定字节。</li>
+          <li>思考：为什么 <code>sizeof(RegAccessType)</code> 通常等于 4 而不是 5？</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+            "q": "联合体 union 的大小等于？",
+            "options": [
+                  "所有成员大小之和",
+                  "最大成员的大小",
+                  "第一个成员的大小",
+                  "固定 4 字节"
+            ],
+            "answer": 1
+      },
+      {
+            "q": "union { uint32_t word; uint8_t bytes[4]; } 中，word 和 bytes 的关系是？",
+            "options": [
+                  "各自独立的内存",
+                  "共享同一块 4 字节内存",
+                  "bytes 在 word 后面",
+                  "编译器自动选择"
+            ],
+            "answer": 1
+      },
+      {
+            "q": "在小端平台上，uint32_t 值为 0x12345678，低字节是？",
+            "options": [
+                  "0x12",
+                  "0x34",
+                  "0x56",
+                  "0x78"
+            ],
+            "answer": 3
+      },
+      {
+            "q": "联合体在 AUTOSAR 里的典型用途是？",
+            "options": [
+                  "动态分配内存",
+                  "同一块内存按不同方式解释",
+                  "自动处理多线程",
+                  "替代指针运算"
+            ],
+            "answer": 1
+      }
+]
+  },
+  {
+    id: "week3-bitfield",
+    kicker: "Week 3 · Day 3",
+    title: "位域：精确控制每个 bit 的含义",
+    summary: "bit-field 定义、布局、对齐陷阱、寄存器位域映射",
+    body: `
+      <h3>为什么嵌入式需要位域</h3>
+      <p>硬件寄存器常常把 32 位拆成多个功能位：低 8 位是设备 ID，接下来 4 位是模式，再 4 位是状态标志……位域让你用结构体的语法<strong>直接映射到具体的 bit 位</strong>。</p>
+
+      <pre><code>typedef struct {
+    uint32_t deviceId : 8;
+    uint32_t mode     : 4;
+    uint32_t flags    : 4;
+    uint32_t reserved : 16;
+} RegBitFieldType;</code></pre>
+      <p>冒号后面的数字表示这个字段占多少 bit。上面的定义把 32 位寄存器按语义切分，代码可读性比用掩码和移位好得多。</p>
+
+      <h3>位域的大小和布局</h3>
+      <p>位域的总大小等于底层类型的大小（这里 <code>uint32_t</code> 是 4 字节）。字段在内存中的排列顺序（从高位到低位还是从低位到高位）<strong>由编译器决定</strong>，C 标准没有统一规定。所以位域代码通常<strong>和编译器绑定</strong>。</p>
+
+      <div class="warning">
+        <strong>常见坑：</strong>
+        位域不能取地址（<code>&reg.mode</code> 是非法的）。不要试图把位域成员传给指针参数。另外，位域的跨编译器可移植性很差，同一个定义在 GCC 和 IAR 上可能布局不同。
+      </div>
+
+      <h3>AUTOSAR 中的典型用法</h3>
+      <p>状态寄存器映射、配置字解析、通信协议中的标志位字段，都常用位域。但 AUTOSAR 规范（如 MISRA-C）对位域使用有一些限制，比如不建议位域成员跨越类型边界。</p>
+
+      <h3>今天的练习</h3>
+      <div class="practice">
+        <ol>
+          <li>定义一个 16 位寄存器位域：<code>enable:1</code>、<code>mode:3</code>、<code>status:4</code>、<code>reserved:8</code>。</li>
+          <li>写代码设置 <code>enable = 1</code>、<code>mode = 2</code>，然后打印整个结构体的值。</li>
+          <li>验证 <code>sizeof</code> 是否等于 2 字节（底层类型是 uint16_t）。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+            "q": "uint32_t mode : 4; 中 : 4 表示什么？",
+            "options": [
+                  "mode 占 4 个字节",
+                  "mode 占 4 个 bit",
+                  "mode 取值范围是 0~4",
+                  "mode 是第 4 个字段"
+            ],
+            "answer": 1
+      },
+      {
+            "q": "位域的总大小通常等于？",
+            "options": [
+                  "所有 bit 之和除以 8",
+                  "底层类型的大小（如 uint32_t 就是 4 字节）",
+                  "编译器自动决定",
+                  "固定 1 字节"
+            ],
+            "answer": 1
+      },
+      {
+            "q": "位域的主要可移植性风险是？",
+            "options": [
+                  "字段顺序和布局由编译器决定",
+                  "不能用于 32 位系统",
+                  "一定比掩码运算慢",
+                  "不支持 uint8_t 类型"
+            ],
+            "answer": 0
+      },
+      {
+            "q": "位域成员不能做什么？",
+            "options": [
+                  "赋值",
+                  "比较",
+                  "取地址（&）",
+                  "作为函数返回值"
+            ],
+            "answer": 2
+      }
+]
+  },
+  {
+    id: "week3-alignment",
+    kicker: "Week 3 · Day 4",
+    title: "内存对齐与填充：sizeof 为什么不等于字段之和",
+    summary: "自然对齐、padding、packed 属性、编译器差异、MISRA 限制",
+    body: `
+      <h3>sizeof 的意外</h3>
+      <p>下面这个结构体，你直觉上觉得它占多少字节？</p>
+      <pre><code>typedef struct {
+    uint8_t  a;
+    uint32_t b;
+    uint8_t  c;
+} SampleType;</code></pre>
+      <p>1 + 4 + 1 = 6？不对。在大多数 32 位平台上，<code>sizeof(SampleType)</code> 等于 <strong>12</strong>。原因是<strong>内存对齐</strong>：编译器会在字段之间插入不可见的 padding，让每个字段的起始地址满足其自身对齐要求。</p>
+
+      <h3>自然对齐规则</h3>
+      <p>一个 N 字节类型的变量，通常要求地址是 N 的倍数。比如 <code>uint32_t</code> 要求 4 字节对齐，所以编译器在 <code>a</code>（1 字节）后面插入 3 字节 padding，让 <code>b</code> 从地址 4 开始。</p>
+
+      <div class="note">
+        <strong>优化技巧：</strong>
+        把大字段放前面、小字段放后面，通常能减少 padding。比如 <code>uint32_t, uint16_t, uint8_t</code> 的顺序通常比反过来的顺序更紧凑。
+      </div>
+
+      <h3>packed 属性</h3>
+      <p>如果你需要严格按字段顺序排列、不插入 padding，可以用编译器扩展：</p>
+      <pre><code>typedef struct __attribute__((packed)) {
+    uint8_t  a;
+    uint32_t b;
+    uint8_t  c;
+} PackedType;  /* sizeof 通常等于 6 */</code></pre>
+      <p>但 packed 结构体访问非对齐字段可能降低性能，有些 CPU 甚至不支持非对齐访问。嵌入式里要谨慎使用。</p>
+
+      <h3>MISRA 限制</h3>
+      <p>MISRA-C 对位域和结构体使用有一些限制，比如位域应使用明确的无符号类型，不建议位域跨越类型边界。结构体定义应尽量跨编译器可移植。</p>
+
+      <h3>今天的练习</h3>
+      <div class="practice">
+        <ol>
+          <li>定义一个含 <code>uint8_t</code>、<code>uint32_t</code>、<code>uint8_t</code> 的结构体，打印 <code>sizeof</code> 并解释 padding。</li>
+          <li>调整字段顺序，重新打印 <code>sizeof</code>，观察变化。</li>
+          <li>用 <code>__attribute__((packed))</code> 定义同一结构体，对比 <code>sizeof</code>。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+            "q": "struct { uint8_t a; uint32_t b; uint8_t c; } 通常 sizeof 大于 6 的原因是？",
+            "options": [
+                  "字段顺序错了",
+                  "编译器插入 padding 保证对齐",
+                  "uint32_t 一定是 8 字节",
+                  "结构体有额外头部"
+            ],
+            "answer": 1
+      },
+      {
+            "q": "减少 padding 的常见技巧是？",
+            "options": [
+                  "大字段放前面、小字段放后面",
+                  "全部用 uint8_t",
+                  "删除 typedef",
+                  "增加字段"
+            ],
+            "answer": 0
+      },
+      {
+            "q": "__attribute__((packed)) 的主要风险是？",
+            "options": [
+                  "代码变长",
+                  "编译器不识别",
+                  "非对齐访问可能降低性能或触发异常",
+                  "结构体不能初始化"
+            ],
+            "answer": 2
+      },
+      {
+            "q": "MISRA 对位域和结构体的主要关注点是什么？",
+            "options": [
+                  "可移植性和明确类型",
+                  "必须用最少的内存",
+                  "不能嵌套",
+                  "必须按字母顺序排列"
+            ],
+            "answer": 0
+      }
+]
+  },
+  {
+    id: "week3-review",
+    kicker: "Week 3 · Day 5-7",
+    title: "把结构体、联合体、位域和对齐串起来",
+    summary: "周末综合：实现一个寄存器配置解析器小模块",
+    body: `
+      <h3>本周核心目标</h3>
+      <p>第 3 周的核心不是记住语法，而是建立<strong>内存布局直觉</strong>：看到结构体就想到 sizeof 和 padding；看到联合体就想到共享内存；看到位域就想到编译器依赖；看到对齐就想到字段顺序影响。</p>
+
+      <h3>周末综合项目：寄存器配置解析器</h3>
+      <p>模拟一个 AUTOSAR 通信模块的寄存器配置，需要同时用到结构体、联合体和位域。</p>
+      <pre><code>week3_project/
+  RegConfig.h
+  RegConfig.c
+  main.c</code></pre>
+
+      <p><code>RegConfig.h</code> 定义：</p>
+      <pre><code>typedef union {
+    uint32_t raw;
+    struct {
+        uint32_t enable   : 1;
+        uint32_t mode     : 3;
+        uint32_t prescale : 8;
+        uint32_t reserved : 20;
+    } bits;
+} RegControlType;</code></pre>
+
+      <h3>实现要求</h3>
+      <ul>
+        <li>提供 <code>RegControl_SetMode(uint32_t *reg, uint8_t mode)</code>。</li>
+        <li>提供 <code>RegControl_GetPrescale(uint32_t reg)</code>。</li>
+        <li>所有函数检查空指针（如果适用）。</li>
+        <li>用联合体访问寄存器，既可以用 <code>.bits</code> 语义访问，也可以直接读写 <code>.raw</code>。</li>
+        <li>打印 <code>sizeof(RegControlType)</code> 并解释为什么。</li>
+      </ul>
+
+      <div class="warning">
+        <strong>工程习惯：</strong>
+        写位域前确认编译器文档中对位域布局的定义。如果不确定，可以用掩码和移位替代，牺牲一点可读性换取可移植性。
+      </div>
+
+      <h3>复盘问题</h3>
+      <ol>
+        <li>RegControlType 的 sizeof 是多少？为什么不是 1+3+8+20=32 bit 的精确值？</li>
+        <li>联合体 .bits 和 .raw 之间的关系是什么？</li>
+        <li>如果把这个定义移植到另一个编译器，最可能出问题的是什么？</li>
+      </ol>
+    `,
+    quiz: [
+      {
+            "q": "union { uint32_t raw; struct { ... } bits; } 的主要用途是？",
+            "options": [
+                  "节省内存",
+                  "同一块内存既按位域语义访问又按整字访问",
+                  "自动处理中断",
+                  "替代动态内存"
+            ],
+            "answer": 1
+      },
+      {
+            "q": "sizeof(RegControlType) 通常等于？",
+            "options": [
+                  "4 字节（底层类型 uint32_t）",
+                  "字段 bit 之和除以 8",
+                  "1 字节",
+                  "编译器随机决定"
+            ],
+            "answer": 0
+      },
+      {
+            "q": "位域定义跨编译器移植时最可能出问题的是？",
+            "options": [
+                  "字段顺序和布局",
+                  "字段名称",
+                  "底层类型",
+                  "sizeof 运算"
+            ],
+            "answer": 0
+      },
+      {
+            "q": "第 3 周的核心不是背语法，而是建立什么？",
+            "options": [
+                  "内存布局直觉",
+                  "绘图能力",
+                  "网络编程",
+                  "数据库设计"
+            ],
+            "answer": 0
+      },
+      {
+            "q": "如果位域可移植性不确定，工程上更稳的做法是？",
+            "options": [
+                  "用掩码和移位替代",
+                  "换编译器",
+                  "不用结构体",
+                  "用 float"
+            ],
+            "answer": 0
+      }
+]
   }
 ];
 
@@ -934,6 +1373,135 @@ const practiceLabs = {
     checks: ["PduBuffer_Copy", "copiedLen", "dstSize", "srcLen", "NULL_PTR"],
     reference: "Std_ReturnType PduBuffer_Copy(uint8_t *dst, uint16_t dstSize, const uint8_t *src, uint16_t srcLen, uint16_t *copiedLen)\n{\n    Std_ReturnType ret = E_NOT_OK;\n\n    if ((dst != NULL_PTR) && (src != NULL_PTR) && (copiedLen != NULL_PTR) && (srcLen <= dstSize)) {\n        for (uint16_t i = 0U; i < srcLen; i++) {\n            dst[i] = src[i];\n        }\n        *copiedLen = srcLen;\n        ret = E_OK;\n    }\n\n    return ret;\n}"
   }
+,
+  "week3-struct": {
+    prompt: "定义 DidConfigType 结构体，含 did/length/data[8]，用指定初始化创建两个配置项。",
+    starter: "#include <stdint.h>
+
+/* 定义 DidConfigType */",
+    checks: ["typedef struct", "uint16_t", "uint8_t", "data[8]", "DidConfigType"],
+    reference: "#include <stdint.h>
+
+typedef struct {
+    uint16_t did;
+    uint8_t length;
+    uint8_t data[8];
+} DidConfigType;
+
+int main(void)
+{
+    DidConfigType cfg1 = { .did = 0xF190U, .length = 4U, .data = { 0x01U, 0x02U, 0x03U, 0x04U } };
+    DidConfigType cfg2 = { .did = 0xF187U, .length = 2U, .data = { 0xAAU, 0xBBU } };
+    return 0;
+}"
+  }
+  "week3-union": {
+    prompt: "定义 RegAccessType 联合体，通过 bytes 数组取出 uint32_t 的指定字节。",
+    starter: "#include <stdint.h>
+
+/* 定义 RegAccessType 和 GetU32Byte */",
+    checks: ["typedef union", "uint32_t", "uint8_t", "bytes[4]", "GetU32Byte"],
+    reference: "#include <stdint.h>
+
+typedef union {
+    uint32_t word;
+    uint8_t bytes[4];
+} RegAccessType;
+
+uint8_t GetU32Byte(uint32_t value, uint8_t index)
+{
+    RegAccessType u;
+    u.word = value;
+    return (index < 4U) ? u.bytes[index] : 0U;
+}"
+  }
+  "week3-bitfield": {
+    prompt: "定义一个 16 位寄存器位域（enable:1, mode:3, status:4, reserved:8），设置值并打印。",
+    starter: "#include <stdint.h>
+#include <stdio.h>
+
+/* 定义位域结构体 */",
+    checks: ["uint16_t", ": 1", ": 3", ": 4", ": 8", "enable", "mode"],
+    reference: "#include <stdint.h>
+#include <stdio.h>
+
+typedef struct {
+    uint16_t enable   : 1;
+    uint16_t mode     : 3;
+    uint16_t status   : 4;
+    uint16_t reserved : 8;
+} RegBitsType;
+
+int main(void)
+{
+    RegBitsType reg = { .enable = 1U, .mode = 2U, .status = 0x0FU };
+    printf("sizeof = %zu\n", sizeof(RegBitsType));
+    printf("value = 0x%04X\n", *(uint16_t *)&reg);
+    return 0;
+}"
+  }
+  "week3-alignment": {
+    prompt: "定义含 uint8_t + uint32_t + uint8_t 的结构体，打印 sizeof，再调整顺序观察变化。",
+    starter: "#include <stdint.h>
+#include <stdio.h>
+
+/* 定义结构体并打印 sizeof */",
+    checks: ["typedef struct", "uint8_t", "uint32_t", "sizeof", "printf"],
+    reference: "#include <stdint.h>
+#include <stdio.h>
+
+typedef struct {
+    uint8_t a;
+    uint32_t b;
+    uint8_t c;
+} SampleType;
+
+typedef struct {
+    uint32_t b;
+    uint8_t a;
+    uint8_t c;
+} OptimizedType;
+
+int main(void)
+{
+    printf("SampleType = %zu\n", sizeof(SampleType));
+    printf("OptimizedType = %zu\n", sizeof(OptimizedType));
+    return 0;
+}"
+  }
+  "week3-review": {
+    prompt: "实现 RegControl_SetMode 和 RegControl_GetPrescale，使用位域联合体。",
+    starter: "#include <stdint.h>
+
+/* 定义 RegControlType 和函数 */",
+    checks: ["typedef union", "uint32_t", ":", "RegControl_SetMode", "RegControl_GetPrescale"],
+    reference: "#include <stdint.h>
+
+typedef union {
+    uint32_t raw;
+    struct {
+        uint32_t enable   : 1;
+        uint32_t mode     : 3;
+        uint32_t prescale : 8;
+        uint32_t reserved : 20;
+    } bits;
+} RegControlType;
+
+void RegControl_SetMode(uint32_t *reg, uint8_t mode)
+{
+    if (reg != NULL) {
+        RegControlType *p = (RegControlType *)reg;
+        p->bits.mode = (uint32_t)(mode & 0x07U);
+    }
+}
+
+uint8_t RegControl_GetPrescale(uint32_t reg)
+{
+    RegControlType u;
+    u.raw = reg;
+    return (uint8_t)u.bits.prescale;
+}"
+  }
 };
 
 let currentStudent = "";
@@ -957,6 +1525,10 @@ const closeAdminBtn = document.querySelector("#closeAdminBtn");
 const adminLoginForm = document.querySelector("#adminLoginForm");
 const adminKeyInput = document.querySelector("#adminKeyInput");
 const adminRecords = document.querySelector("#adminRecords");
+const wrongBookBtn = document.querySelector("#wrongBookBtn");
+const wrongBookPanel = document.querySelector("#wrongBookPanel");
+const closeWrongBookBtn = document.querySelector("#closeWrongBookBtn");
+const wrongBookContent = document.querySelector("#wrongBookContent");
 
 function readRecords() {
   return JSON.parse(localStorage.getItem(recordsKey) || "{}");
@@ -1032,7 +1604,11 @@ function updateProgress() {
 function renderNav() {
   let currentGroup = "";
   modules.forEach((module) => {
-    const group = module.kicker.startsWith("Week 2") ? "第 2 周 · 指针专项" : "第 1 周 · C 底层基础";
+    const group = module.kicker.startsWith("Week 3")
+          ? "第 3 周 · 结构体与内存"
+          : module.kicker.startsWith("Week 2")
+            ? "第 2 周 · 指针专项"
+            : "第 1 周 · C 底层基础";
     if (group !== currentGroup) {
       currentGroup = group;
       const groupEl = document.createElement("div");
@@ -1107,7 +1683,11 @@ function renderPractice(module, labEl) {
       <textarea spellcheck="false">${last}</textarea>
       <div class="lab-actions">
         <button class="lab-btn submit-lab" type="button">提交练习</button>
+        <button class="lab-btn secondary preview-highlight" type="button">预览高亮</button>
         <button class="lab-btn secondary show-reference" type="button">查看参考答案</button>
+      </div>
+      <div class="lab-preview" aria-live="polite" style="display:none;">
+        <pre><code class="language-c"></code></pre>
       </div>
       <div class="lab-result ${savedLabs[module.id]?.feedbackClass || ""}" aria-live="polite">${savedLabs[module.id]?.feedback || "这里不会真正编译 C 代码，会检查关键结构是否齐全，并保存你的提交。"}</div>
       <pre class="reference-answer"><code>${escapeHtml(lab.reference)}</code></pre>
@@ -1142,6 +1722,17 @@ function renderPractice(module, labEl) {
     };
     saveLabs();
   });
+  labEl.querySelector(".preview-highlight").addEventListener("click", () => {
+    const preview = labEl.querySelector(".lab-preview");
+    const codeBlock = preview.querySelector("code");
+    codeBlock.textContent = textarea.value;
+    preview.style.display = preview.style.display === "none" ? "block" : "none";
+    if (typeof Prism !== "undefined" && preview.style.display !== "none") {
+      codeBlock.classList.add("language-c");
+      Prism.highlightElement(codeBlock);
+    }
+  });
+
   labEl.querySelector(".show-reference").addEventListener("click", () => {
     reference.classList.toggle("is-visible");
   });
@@ -1252,6 +1843,29 @@ function renderModules() {
 
     moduleContainer.appendChild(node);
   });
+  
+  /* 章节导航 */
+  modules.forEach((module, index) => {
+    const node = moduleContainer.querySelector(`#${module.id}`);
+    if (!node) return;
+    const nav = document.createElement("div");
+    nav.className = "module-nav";
+    const prev = index > 0 ? modules[index - 1] : null;
+    const next = index < modules.length - 1 ? modules[index + 1] : null;
+    nav.innerHTML = `
+      ${prev ? `<a href="#${prev.id}" class="ghost-btn">← ${prev.title}</a>` : "<span></span>"}
+      ${next ? `<a href="#${next.id}" class="ghost-btn">${next.title} →</a>` : "<span></span>"}
+    `;
+    node.appendChild(nav);
+  });
+  
+  /* 语法高亮 */
+  if (typeof Prism !== "undefined") {
+    moduleContainer.querySelectorAll("pre code, .reference-answer code").forEach((block) => {
+      block.classList.add("language-c");
+    });
+    Prism.highlightAll();
+  }
 }
 
 function renderAdminRecords() {
@@ -1275,6 +1889,45 @@ function renderAdminRecords() {
   }).join("");
 }
 
+function renderWrongBook() {
+  const wrongItems = [];
+  Object.entries(savedQuiz).forEach(([moduleId, quizData]) => {
+    if (quizData && quizData.feedback) {
+      quizData.feedback.forEach((item) => {
+        if (!item.isCorrect) {
+          const module = modules.find((m) => m.id === moduleId);
+          if (module) {
+            wrongItems.push({
+              moduleTitle: module.title,
+              moduleId: moduleId,
+              question: module.quiz[item.index],
+              selectedOption: item.selected != null ? module.quiz[item.index].options[item.selected] : "未作答",
+              correctOption: item.correctOption,
+              explanation: item.explanation
+            });
+          }
+        }
+      });
+    }
+  });
+  
+  if (wrongItems.length === 0) {
+    wrongBookContent.innerHTML = "<p>暂无错题，继续保持！</p>";
+    return;
+  }
+  
+  wrongBookContent.innerHTML = wrongItems.map((item, idx) => `
+    <div class="record-card">
+      <strong>来自：${item.moduleTitle}</strong>
+      <p>${idx + 1}. ${item.question.q}</p>
+      <p style="color: var(--accent-2);">你的答案：${item.selectedOption}</p>
+      <p style="color: var(--accent);">正确答案：${item.correctOption}</p>
+      <p style="color: var(--muted); font-size: 13px;">${item.explanation}</p>
+      <a href="#${item.moduleId}" class="ghost-btn" style="margin-top: 8px; display: inline-block;" onclick="wrongBookPanel.classList.add('is-hidden');">跳回本节</a>
+    </div>
+  `).join("");
+}
+
 function startAppForStudent(name) {
   loadStudent(name);
   if (navList.children.length === 0) {
@@ -1282,6 +1935,7 @@ function startAppForStudent(name) {
   }
   renderModules();
   updateProgress();
+  wrongBookBtn.style.display = "inline-block";
 }
 
 loginForm.addEventListener("submit", (event) => {
@@ -1307,6 +1961,15 @@ closeAdminBtn.addEventListener("click", () => {
   adminPanel.classList.add("is-hidden");
 });
 
+wrongBookBtn.addEventListener("click", () => {
+  renderWrongBook();
+  wrongBookPanel.classList.remove("is-hidden");
+});
+
+closeWrongBookBtn.addEventListener("click", () => {
+  wrongBookPanel.classList.add("is-hidden");
+});
+
 adminLoginForm.addEventListener("submit", (event) => {
   event.preventDefault();
   if (adminKeyInput.value === ADMIN_KEY) {
@@ -1323,6 +1986,26 @@ if (rememberedStudent) {
   loginOverlay.classList.remove("is-hidden");
   studentNameInput.focus();
 }
+
+/* 夜间模式 */
+const themeToggle = document.createElement("button");
+themeToggle.className = "theme-toggle";
+themeToggle.textContent = "🌙";
+themeToggle.setAttribute("aria-label", "切换夜间模式");
+themeToggle.type = "button";
+themeToggle.addEventListener("click", () => {
+  const isDark = document.documentElement.classList.toggle("dark");
+  themeToggle.textContent = isDark ? "☀️" : "🌙";
+  localStorage.setItem("autosar-theme", isDark ? "dark" : "light");
+});
+
+const savedTheme = localStorage.getItem("autosar-theme");
+if (savedTheme === "dark") {
+  document.documentElement.classList.add("dark");
+  themeToggle.textContent = "☀️";
+}
+
+document.querySelector(".user-tools").appendChild(themeToggle);
 
 /* 返回顶部按钮 */
 const backToTop = document.createElement("button");
@@ -1352,6 +2035,9 @@ document.addEventListener("keydown", (event) => {
     }
     if (!adminPanel.classList.contains("is-hidden")) {
       adminPanel.classList.add("is-hidden");
+    }
+    if (!wrongBookPanel.classList.contains("is-hidden")) {
+      wrongBookPanel.classList.add("is-hidden");
     }
   }
 });

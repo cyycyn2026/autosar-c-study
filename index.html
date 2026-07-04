@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AUTOSAR 嵌入式 C 学习站</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" />
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -21,6 +22,7 @@
       <div class="user-tools">
         <span id="studentBadge" class="student-badge">未登录</span>
         <button id="switchStudentBtn" class="tool-btn" type="button">切换</button>
+        <button id="wrongBookBtn" class="tool-btn" type="button" style="display:none;">错题</button>
         <button id="adminBtn" class="tool-btn" type="button">管理</button>
       </div>
     </header>
@@ -56,6 +58,19 @@
       </div>
     </section>
 
+    <section id="wrongBookPanel" class="overlay is-hidden" aria-label="错题本">
+      <div class="dialog admin-dialog">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow">复习强化</p>
+            <h2>错题本</h2>
+          </div>
+          <button id="closeWrongBookBtn" class="tool-btn" type="button">关闭</button>
+        </div>
+        <div id="wrongBookContent" class="admin-records"></div>
+      </div>
+    </section>
+
     <main class="layout">
       <aside class="sidebar" aria-label="课程导航">
         <div class="day-card">
@@ -77,11 +92,11 @@
             </p>
             <div class="hero-stats" aria-label="课程概览">
               <div>
-                <strong>10</strong>
+                <strong>15</strong>
                 <span>学习单元</span>
               </div>
               <div>
-                <strong>42</strong>
+                <strong>62</strong>
                 <span>随堂题</span>
               </div>
               <div>
@@ -135,6 +150,8 @@
       </article>
     </template>
 
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-c.min.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

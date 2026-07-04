@@ -21,6 +21,29 @@
   --shadow-soft: 0 8px 18px rgba(22, 39, 33, 0.05);
 }
 
+html.dark {
+  color-scheme: dark;
+  --bg: #0f1a17;
+  --paper: #1a2823;
+  --paper-2: #16221e;
+  --ink: #e8f4ec;
+  --muted: #8aa396;
+  --line: #2a3f36;
+  --accent: #2ecc71;
+  --accent-dark: #27ae60;
+  --accent-2: #e74c3c;
+  --soft: #1a332b;
+  --warn: #3d3318;
+  --warn-text: #f1c40f;
+  --code: #0d1512;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.2);
+}
+
+html.dark body {
+  background: linear-gradient(180deg, rgba(15, 35, 28, 0.8), rgba(15, 26, 23, 0) 360px), var(--bg);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -635,6 +658,22 @@ pre {
   gap: 8px;
 }
 
+.lab-preview {
+  display: none;
+  margin-top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: #0b1512;
+  overflow: hidden;
+}
+
+.lab-preview pre {
+  margin: 0;
+  padding: 14px;
+  background: transparent;
+  box-shadow: none;
+}
+
 .lab-btn {
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
@@ -943,6 +982,40 @@ code {
 .back-to-top.is-visible {
   opacity: 1;
   pointer-events: auto;
+}
+
+
+.module-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 28px;
+  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+html.dark .module-nav {
+  background: rgba(26, 40, 35, 0.5);
+}
+
+.module-nav a {
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.theme-toggle {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  cursor: pointer;
+  padding: 8px 10px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+html.dark .theme-toggle {
+  background: var(--paper-2);
+  border-color: var(--line);
 }
 
 @media (max-width: 980px) {
