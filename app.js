@@ -1109,7 +1109,7 @@ function renderPractice(module, labEl) {
         <button class="lab-btn submit-lab" type="button">提交练习</button>
         <button class="lab-btn secondary show-reference" type="button">查看参考答案</button>
       </div>
-      <div class="lab-result" aria-live="polite">${savedLabs[module.id]?.feedback || "这里不会真正编译 C 代码，会检查关键结构是否齐全，并保存你的提交。"}</div>
+      <div class="lab-result ${savedLabs[module.id]?.feedbackClass || ""}" aria-live="polite">${savedLabs[module.id]?.feedback || "这里不会真正编译 C 代码，会检查关键结构是否齐全，并保存你的提交。"}</div>
       <pre class="reference-answer"><code>${escapeHtml(lab.reference)}</code></pre>
     </div>
   `;
@@ -1120,13 +1120,24 @@ function renderPractice(module, labEl) {
   labEl.querySelector(".submit-lab").addEventListener("click", () => {
     const code = textarea.value;
     const missing = lab.checks.filter((token) => !code.includes(token));
-    const feedback = missing.length === 0
-      ? "提交完成：关键结构都出现了。下一步建议你逐行解释每个变量、指针和边界检查。"
-      : `提交完成：还建议补充这些关键点：${missing.join("、")}。`;
+    let feedbackClass = "";
+    let feedback = "";
+    if (missing.length === 0) {
+      feedbackClass = "is-success";
+      feedback = "提交完成：关键结构都出现了。下一步建议你逐行解释每个变量、指针和边界检查。";
+    } else if (missing.length <= 2) {
+      feedbackClass = "is-partial";
+      feedback = `提交完成：还建议补充这些关键点：${missing.join("、")}。`;
+    } else {
+      feedbackClass = "is-fail";
+      feedback = `提交完成：建议补充这些关键点：${missing.join("、")}。`;
+    }
     result.textContent = feedback;
+    result.className = `lab-result ${feedbackClass}`;
     savedLabs[module.id] = {
       code,
       feedback,
+      feedbackClass,
       submittedAt: new Date().toISOString()
     };
     saveLabs();
@@ -1312,3 +1323,35 @@ if (rememberedStudent) {
   loginOverlay.classList.remove("is-hidden");
   studentNameInput.focus();
 }
+
+/* 返回顶部按钮 */
+const backToTop = document.createElement("button");
+backToTop.className = "back-to-top";
+backToTop.textContent = "↑";
+backToTop.setAttribute("aria-label", "返回顶部");
+backToTop.type = "button";
+backToTop.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+document.body.appendChild(backToTop);
+
+let scrollRaf = null;
+window.addEventListener("scroll", () => {
+  if (scrollRaf) return;
+  scrollRaf = requestAnimationFrame(() => {
+    backToTop.classList.toggle("is-visible", window.scrollY > 600);
+    scrollRaf = null;
+  });
+});
+
+/* ESC 键关闭弹窗 */
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    if (!loginOverlay.classList.contains("is-hidden")) {
+      loginOverlay.classList.add("is-hidden");
+    }
+    if (!adminPanel.classList.contains("is-hidden")) {
+      adminPanel.classList.add("is-hidden");
+    }
+  }
+});
