@@ -732,10 +732,27 @@ html.dark .hero-copy h2 {
   overflow: hidden;
   scroll-margin-top: 100px;
   transition: box-shadow var(--transition);
+  border-left: 4px solid transparent;
 }
 
 .module:hover {
   box-shadow: var(--shadow-md);
+}
+
+.module[data-week="week1"] {
+  border-left-color: #0d8a6e;
+}
+
+.module[data-week="week2"] {
+  border-left-color: #3b82f6;
+}
+
+.module[data-week="week3"] {
+  border-left-color: #a855f7;
+}
+
+.module[data-week="week4"] {
+  border-left-color: #e05a3a;
 }
 
 .module-head {
@@ -747,6 +764,21 @@ html.dark .hero-copy h2 {
   background: linear-gradient(90deg, rgba(13,138,110,0.06), rgba(255,255,255,0)),
     linear-gradient(135deg, #fbfcfa, #f5f8f7);
   position: relative;
+}
+
+.module[data-week="week2"] .module-head {
+  background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(255,255,255,0)),
+    linear-gradient(135deg, #fbfcff, #f4f7fb);
+}
+
+.module[data-week="week3"] .module-head {
+  background: linear-gradient(90deg, rgba(168,85,247,0.08), rgba(255,255,255,0)),
+    linear-gradient(135deg, #fdfbff, #f7f3fb);
+}
+
+.module[data-week="week4"] .module-head {
+  background: linear-gradient(90deg, rgba(224,90,58,0.09), rgba(255,255,255,0)),
+    linear-gradient(135deg, #fffcfb, #fbf5f2);
 }
 
 .module-head::after {
@@ -780,6 +812,18 @@ html.dark .hero-copy h2 {
   height: 6px;
   background: linear-gradient(135deg, var(--accent-2), var(--accent-2-light));
   border-radius: 50%;
+}
+
+.module[data-week="week2"] .module-kicker::before {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+.module[data-week="week3"] .module-kicker::before {
+  background: linear-gradient(135deg, #a855f7, #c084fc);
+}
+
+.module[data-week="week4"] .module-kicker::before {
+  background: linear-gradient(135deg, var(--accent-2), var(--accent-2-light));
 }
 
 .done-toggle {
@@ -855,6 +899,12 @@ html.dark .hero-copy h2 {
 .module-body li {
   color: #344039;
   line-height: 1.8;
+}
+
+html.dark .module-body p,
+html.dark .module-body li,
+html.dark .feedback-item p {
+  color: #c5d7cf;
 }
 
 .module-body ul,

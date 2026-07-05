@@ -1307,6 +1307,408 @@ u.word = 0x12345678U;
             "answer": 0
       }
 ]
+  },
+  {
+    id: "week4-function-interface",
+    kicker: "Week 4 · Day 1",
+    title: "函数接口：输入、输出、返回值和副作用",
+    summary: "函数原型、参数方向、输出指针、返回值、接口契约",
+    body: `
+      <h3>为什么第 4 周先讲函数接口</h3>
+      <p>在 AUTOSAR 项目里，你写的不是一个孤立的 <code>main</code>，而是一堆被 RTE、BSW、上层模块调用的函数。函数接口就是模块之间的合同：调用者给什么，函数能改什么，失败时怎么返回，输出结果放在哪里。</p>
+      <p>很多 C 初学者会把函数写成“能跑就行”，但嵌入式项目更关心<strong>接口边界是否清楚</strong>。一个好的接口，别人只看函数原型就能知道参数方向和错误处理方式。</p>
+
+      <h3>先分清输入、输出和输入输出</h3>
+      <ul>
+        <li><code>const uint8_t *src</code>：输入 buffer，函数只读，不应该修改。</li>
+        <li><code>uint8_t *dst</code>：输出 buffer，函数会写入。</li>
+        <li><code>uint16_t *length</code>：输出参数或输入输出参数，具体要看接口说明。</li>
+        <li><code>Std_ReturnType</code>：返回 <code>E_OK</code> 或 <code>E_NOT_OK</code>，表示函数是否成功。</li>
+      </ul>
+
+      <pre><code>Std_ReturnType Did_Read(
+    uint16_t did,
+    uint8_t *data,
+    uint16_t dataSize,
+    uint16_t *actualLen
+);</code></pre>
+
+      <p>这个接口的含义应该这样读：调用者给一个 DID，提供一个可写 buffer 和 buffer 容量；函数把读到的数据写进 <code>data</code>，把实际长度写进 <code>actualLen</code>，最后用返回值告诉调用者成功还是失败。</p>
+
+      <h3>接口里的副作用</h3>
+      <p>副作用就是函数除了返回值以外，还改变了外部状态。比如写输出指针、修改全局变量、访问寄存器、发送报文、清除错误标志，这些都属于副作用。嵌入式 C 里副作用不可避免，但必须让它<strong>可见、可控、可测试</strong>。</p>
+
+      <div class="note">
+        <strong>接口阅读顺序：</strong>
+        先看返回值，再看每个指针是否为 const，再看长度参数，再看函数名动词。这样你能快速判断它是读、写、查找、转换，还是触发硬件动作。
+      </div>
+
+      <h3>AUTOSAR 风格返回值</h3>
+      <pre><code>#define E_OK     0U
+#define E_NOT_OK 1U
+typedef uint8_t Std_ReturnType;</code></pre>
+      <p>返回值只表达“本次调用是否成功”。真正的数据通常通过输出指针带出。这样做的好处是接口风格统一，调用者可以用同一种模式处理错误。</p>
+
+      <h3>今天的练习</h3>
+      <div class="practice">
+        <ol>
+          <li>写一个 <code>Did_CopyValue</code> 函数，把输入数据复制到输出 buffer。</li>
+          <li>要求检查 <code>src</code>、<code>dst</code>、<code>actualLen</code> 是否为空。</li>
+          <li>要求检查 <code>srcLen <= dstSize</code>，避免越界写。</li>
+          <li>成功时写入 <code>*actualLen</code>，返回 <code>E_OK</code>；失败时返回 <code>E_NOT_OK</code>。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+        q: "函数参数 const uint8_t *src 通常表示什么？",
+        options: ["输入数据，只读不改", "输出数据，必须写", "函数名", "动态内存"],
+        answer: 0
+      },
+      {
+        q: "Std_ReturnType 在 AUTOSAR 风格接口里常用来表示什么？",
+        options: ["函数执行成功或失败", "输出 buffer 地址", "数组长度单位", "CPU 频率"],
+        answer: 0
+      },
+      {
+        q: "输出指针 actualLen 使用前必须先做什么？",
+        options: ["检查是否为空指针", "强制转换成 uint8_t", "写入 0xFF", "声明成 static"],
+        answer: 0
+      },
+      {
+        q: "srcLen <= dstSize 这个检查主要防止什么？",
+        options: ["输出 buffer 越界写", "函数名重复", "编译器优化", "指针变成数组"],
+        answer: 0
+      },
+      {
+        q: "函数副作用指的是什么？",
+        options: ["函数改变外部可见状态", "函数没有返回值", "函数写了注释", "函数用了 typedef"],
+        answer: 0
+      }
+    ]
+  },
+  {
+    id: "week4-header-source",
+    kicker: "Week 4 · Day 2",
+    title: "头文件和源文件：把模块边界写清楚",
+    summary: ".h/.c 拆分、声明和定义、include guard、static 内部函数",
+    body: `
+      <h3>.h 和 .c 分别放什么</h3>
+      <p>一个 C 模块通常由头文件和源文件组成。头文件 <code>.h</code> 是给别人看的接口，源文件 <code>.c</code> 是模块自己的实现。把这两者分清楚，是从“写小程序”走向“写工程代码”的关键一步。</p>
+
+      <ul>
+        <li><code>.h</code>：类型定义、宏、公开函数声明、必要的外部接口。</li>
+        <li><code>.c</code>：函数实现、私有全局变量、私有辅助函数。</li>
+        <li>不希望外部调用的函数，放在 <code>.c</code> 里并加 <code>static</code>。</li>
+        <li>全局变量定义只放在一个 <code>.c</code> 里，头文件里最多放 <code>extern</code> 声明。</li>
+      </ul>
+
+      <h3>include guard</h3>
+      <p>头文件可能被多个文件反复包含，所以必须防止重复展开。传统写法是 include guard：</p>
+      <pre><code>#ifndef DID_SERVICE_H
+#define DID_SERVICE_H
+
+#include &lt;stdint.h&gt;
+
+Std_ReturnType DidService_Read(uint16_t did, uint8_t *data, uint16_t size);
+
+#endif /* DID_SERVICE_H */</code></pre>
+
+      <p>它的意思是：如果 <code>DID_SERVICE_H</code> 还没有定义，就展开头文件内容，并定义这个宏；如果已经定义过，就跳过。这样可以避免类型重复定义、函数声明重复展开带来的问题。</p>
+
+      <h3>声明和定义不是一回事</h3>
+      <pre><code>/* 声明：告诉编译器有这个函数 */
+Std_ReturnType DidService_Init(void);
+
+/* 定义：真正实现函数体 */
+Std_ReturnType DidService_Init(void)
+{
+    return E_OK;
+}</code></pre>
+      <p>声明可以出现多次，定义通常只能出现一次。链接阶段会把调用点和函数定义连接起来。如果有声明但没有定义，链接时会报 undefined reference；如果定义重复，链接时会报 multiple definition。</p>
+
+      <h3>static 内部函数</h3>
+      <p><code>static</code> 修饰全局函数时，表示这个函数只在当前 <code>.c</code> 文件里可见。AUTOSAR 模块里很常见：公开函数负责接口，内部函数负责拆分细节。</p>
+
+      <div class="warning">
+        <strong>常见错误：</strong>
+        把函数实现写进头文件，或者在头文件里定义普通全局变量。这样多个 <code>.c</code> 同时包含时，容易造成重复定义。
+      </div>
+
+      <h3>今天的练习</h3>
+      <div class="practice">
+        <ol>
+          <li>设计 <code>DidService.h</code>，包含 include guard 和公开函数声明。</li>
+          <li>设计 <code>DidService.c</code>，实现公开函数，并写一个 <code>static</code> 内部查表函数。</li>
+          <li>解释哪些内容属于公开接口，哪些内容属于私有实现。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+        q: ".h 文件主要放什么？",
+        options: ["公开接口声明和类型定义", "所有函数实现", "编译器输出", "运行日志"],
+        answer: 0
+      },
+      {
+        q: "include guard 的作用是什么？",
+        options: ["防止头文件内容被重复展开", "提升 CPU 频率", "自动分配内存", "替代链接脚本"],
+        answer: 0
+      },
+      {
+        q: "static 修饰全局函数时表示什么？",
+        options: ["只在当前 .c 文件内部可见", "函数运行更快", "函数不能被调用", "函数返回 static"],
+        answer: 0
+      },
+      {
+        q: "有声明但没有定义，通常在哪个阶段报错？",
+        options: ["链接阶段", "预处理阶段", "运行 1 小时后", "注释阶段"],
+        answer: 0
+      },
+      {
+        q: "为什么不建议在头文件里定义普通全局变量？",
+        options: ["多个 .c 包含后可能重复定义", "变量不能有名字", "头文件不能包含数字", "会让 const 失效"],
+        answer: 0
+      }
+    ]
+  },
+  {
+    id: "week4-macro-preprocess",
+    kicker: "Week 4 · Day 3",
+    title: "预处理和宏：编译前发生了什么",
+    summary: "#define、条件编译、函数式宏、宏副作用、配置开关",
+    body: `
+      <h3>预处理是什么</h3>
+      <p>C 编译前会先经过预处理阶段。预处理器会处理 <code>#include</code>、<code>#define</code>、<code>#if</code>、<code>#ifdef</code> 这些指令，然后把结果交给编译器。AUTOSAR 项目里大量配置开关、内存映射、编译器适配都依赖预处理。</p>
+
+      <h3>对象式宏</h3>
+      <pre><code>#define DID_MAX_LEN 8U
+#define DEM_EVENT_STATUS_FAILED 1U</code></pre>
+      <p>对象式宏只是简单替换。推荐给宏值加类型后缀，比如 <code>8U</code>，明确它是无符号常量。</p>
+
+      <h3>函数式宏和括号</h3>
+      <pre><code>#define MIN_U16(a, b) (((a) < (b)) ? (a) : (b))</code></pre>
+      <p>宏没有类型检查，只是文本替换。参数和整体表达式都要加括号，否则遇到复杂表达式时容易出错。</p>
+
+      <div class="warning">
+        <strong>宏副作用：</strong>
+        不要把 <code>i++</code> 传给可能多次使用参数的宏。例如 <code>MIN_U16(i++, limit)</code> 可能让 <code>i</code> 增加不止一次。
+      </div>
+
+      <h3>条件编译</h3>
+      <pre><code>#if (DID_SERVICE_ENABLE == STD_ON)
+Std_ReturnType DidService_Read(uint16_t did, uint8_t *data, uint16_t size);
+#endif</code></pre>
+      <p>条件编译可以根据配置决定某段代码是否参与编译。它和普通 <code>if</code> 不同：普通 <code>if</code> 是运行时选择，条件编译是编译前选择，未启用的代码根本不会进入编译器。</p>
+
+      <h3>AUTOSAR 常见宏风格</h3>
+      <ul>
+        <li><code>STD_ON</code> / <code>STD_OFF</code>：配置开关。</li>
+        <li><code>NULL_PTR</code>：空指针宏。</li>
+        <li><code>FUNC</code>、<code>P2VAR</code>、<code>P2CONST</code>：用于编译器抽象和内存映射。</li>
+        <li><code>DET</code>、<code>DEM</code> 相关宏：错误检测和诊断事件配置。</li>
+      </ul>
+
+      <h3>今天的练习</h3>
+      <div class="practice">
+        <ol>
+          <li>写一个 <code>CLAMP_U16(value, min, max)</code> 宏，要求参数都加括号。</li>
+          <li>写一个配置开关 <code>DID_DEV_ERROR_DETECT</code>，启用时调用错误上报函数。</li>
+          <li>解释为什么函数式宏不应该接收带副作用的表达式。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+        q: "预处理发生在什么时候？",
+        options: ["编译前", "程序运行 10 秒后", "链接完成后", "下载到芯片后"],
+        answer: 0
+      },
+      {
+        q: "函数式宏为什么要给参数加括号？",
+        options: ["避免表达式优先级错误", "让变量变成全局变量", "减少 ROM", "自动检查类型"],
+        answer: 0
+      },
+      {
+        q: "条件编译和普通 if 的区别是什么？",
+        options: ["条件编译在编译前决定代码是否存在", "条件编译只能用于 float", "普通 if 不会生成代码", "没有区别"],
+        answer: 0
+      },
+      {
+        q: "把 i++ 传给可能多次使用参数的宏，风险是什么？",
+        options: ["i 可能被修改多次", "i 一定不变", "宏会自动变函数", "编译器会删除 i"],
+        answer: 0
+      },
+      {
+        q: "STD_ON / STD_OFF 常用于什么？",
+        options: ["配置开关", "数组下标", "堆内存大小", "函数返回地址"],
+        answer: 0
+      }
+    ]
+  },
+  {
+    id: "week4-error-handling",
+    kicker: "Week 4 · Day 4",
+    title: "错误处理：先失败得清楚，再成功得稳定",
+    summary: "参数检查、错误码、早返回、DET 思路、防御式编程",
+    body: `
+      <h3>嵌入式代码为什么重视错误处理</h3>
+      <p>嵌入式软件常常运行在长时间不断电的环境里，一次越界写、一次空指针解引用、一次错误长度处理，都可能变成很难复现的问题。好的错误处理不是为了“让代码看起来复杂”，而是为了让失败路径清楚、可控、可定位。</p>
+
+      <h3>先检查参数，再做业务</h3>
+      <pre><code>Std_ReturnType ReadByte(const uint8_t *data, uint16_t len, uint16_t index, uint8_t *value)
+{
+    Std_ReturnType ret = E_NOT_OK;
+
+    if ((data != NULL_PTR) && (value != NULL_PTR) && (index < len)) {
+        *value = data[index];
+        ret = E_OK;
+    }
+
+    return ret;
+}</code></pre>
+      <p>这段代码的结构很稳定：默认失败，所有条件满足才成功。它避免了多个地方返回，也让失败路径更容易读。</p>
+
+      <h3>早返回还是单出口</h3>
+      <p>有些项目喜欢早返回，遇到错误立刻 <code>return</code>；有些项目为了 MISRA 或可读性，倾向单出口。你要适应项目规范。关键不是哪一种绝对正确，而是同一个模块里风格一致，错误路径清晰。</p>
+
+      <h3>DET 思路</h3>
+      <p>AUTOSAR 里常见开发错误检测 DET。比如模块未初始化、参数为空、ID 越界，都可以在开发阶段上报。简化理解：DET 不是业务错误处理，而是帮助开发者尽早发现接口使用错误。</p>
+
+      <pre><code>#if (DID_DEV_ERROR_DETECT == STD_ON)
+if (data == NULL_PTR) {
+    (void)Det_ReportError(DID_MODULE_ID, 0U, DID_READ_API_ID, DID_E_PARAM_POINTER);
+}
+#endif</code></pre>
+
+      <div class="note">
+        <strong>防御式编程顺序：</strong>
+        先检查模块状态，再检查指针，再检查长度和范围，最后才访问内存或硬件寄存器。
+      </div>
+
+      <h3>今天的练习</h3>
+      <div class="practice">
+        <ol>
+          <li>实现 <code>Did_ReadByte</code>，读取 buffer 指定位置的一个字节。</li>
+          <li>检查 <code>data</code>、<code>value</code>、<code>index < len</code>。</li>
+          <li>使用默认失败、成功赋值的结构。</li>
+          <li>用注释写出每个失败条件对应的含义。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+        q: "默认 ret = E_NOT_OK 的好处是什么？",
+        options: ["只有所有条件满足时才改成成功", "让函数更慢", "避免写 if", "让指针自动有效"],
+        answer: 0
+      },
+      {
+        q: "访问 data[index] 前至少要检查什么？",
+        options: ["data 非空且 index < len", "index 是偶数", "data 是 static", "len 等于 0"],
+        answer: 0
+      },
+      {
+        q: "DET 更偏向发现哪类问题？",
+        options: ["开发阶段接口使用错误", "客户付款状态", "网页布局", "编译器版本名"],
+        answer: 0
+      },
+      {
+        q: "防御式编程通常先做什么？",
+        options: ["检查状态、指针、长度和范围", "直接访问内存", "先写输出值", "先打印成功"],
+        answer: 0
+      },
+      {
+        q: "早返回和单出口应该如何选择？",
+        options: ["遵守项目规范并保持一致", "永远混用", "只看函数名长度", "由数组大小决定"],
+        answer: 0
+      }
+    ]
+  },
+  {
+    id: "week4-review",
+    kicker: "Week 4 · Day 5-7",
+    title: "周末综合：写一个简化 DID 服务模块",
+    summary: "综合函数接口、头文件、宏、错误处理和模块拆分",
+    body: `
+      <h3>本周综合目标</h3>
+      <p>第 4 周的目标是把“会写函数”推进到“会写一个小模块”。你要能把公开接口放进头文件，把内部实现藏在源文件里，用宏控制配置，用返回值表达错误，用指针安全地传递数据。</p>
+
+      <h3>项目结构</h3>
+      <pre><code>week4_project/
+  Std_Types.h
+  DidService_Cfg.h
+  DidService.h
+  DidService.c
+  main.c</code></pre>
+
+      <h3>功能要求</h3>
+      <ul>
+        <li><code>DidService.h</code> 暴露 <code>DidService_Init</code> 和 <code>DidService_Read</code>。</li>
+        <li><code>DidService.c</code> 内部维护初始化状态。</li>
+        <li>用配置表保存 DID、长度和数据。</li>
+        <li>读取 DID 时检查模块是否初始化、输出指针是否为空、输出 buffer 是否足够。</li>
+        <li>成功返回 <code>E_OK</code>，失败返回 <code>E_NOT_OK</code>。</li>
+      </ul>
+
+      <h3>推荐接口</h3>
+      <pre><code>Std_ReturnType DidService_Init(void);
+
+Std_ReturnType DidService_Read(
+    uint16_t did,
+    uint8_t *data,
+    uint16_t dataSize,
+    uint16_t *actualLen
+);</code></pre>
+
+      <h3>配置表思路</h3>
+      <pre><code>typedef struct {
+    uint16_t did;
+    uint16_t length;
+    const uint8_t *data;
+} DidEntryType;</code></pre>
+
+      <p>这里 <code>data</code> 是 <code>const uint8_t *</code>，表示配置表里的原始数据不应该被读取函数修改。读取时只是把它复制到调用者提供的输出 buffer。</p>
+
+      <div class="warning">
+        <strong>验收重点：</strong>
+        不是代码越短越好，而是每条边界都清楚：模块是否初始化、DID 是否存在、指针是否为空、长度是否足够、输出长度是否正确。
+      </div>
+
+      <h3>复盘问题</h3>
+      <ol>
+        <li>为什么公开函数声明放在 <code>.h</code>，内部查表函数放在 <code>.c</code>？</li>
+        <li><code>const uint8_t *data</code> 保护的是谁的数据？</li>
+        <li>如果调用者给的 <code>dataSize</code> 不够，函数应该怎么返回？</li>
+        <li>初始化状态为什么适合放在 <code>static</code> 变量里？</li>
+      </ol>
+    `,
+    quiz: [
+      {
+        q: "DidService_Read 的公开声明应该放在哪里？",
+        options: ["DidService.h", "main.c 的注释里", "编译器日志里", "链接脚本里"],
+        answer: 0
+      },
+      {
+        q: "内部查表函数如果不希望外部调用，应该怎么处理？",
+        options: ["放在 .c 并加 static", "放在 .h 并去掉名字", "写成 float", "不用函数"],
+        answer: 0
+      },
+      {
+        q: "读取 DID 前检查初始化状态的目的是什么？",
+        options: ["防止模块未准备好就被使用", "改变 DID 值", "扩大 buffer", "跳过编译"],
+        answer: 0
+      },
+      {
+        q: "dataSize 小于 DID 数据长度时应该怎么做？",
+        options: ["返回 E_NOT_OK，避免越界写", "继续写满", "忽略长度", "把指针置空后写"],
+        answer: 0
+      },
+      {
+        q: "第 4 周综合练习真正训练的是什么？",
+        options: ["模块边界和接口安全", "网页动画", "动态内存分配", "浮点优化"],
+        answer: 0
+      }
+    ]
   }
 ];
 
@@ -1502,6 +1904,154 @@ uint8_t RegControl_GetPrescale(uint32_t reg)
     u.raw = reg;
     return (uint8_t)u.bits.prescale;
 }`
+  },
+  "week4-function-interface": {
+    prompt: "实现 Did_CopyValue：输入 src 只读，输出 dst 可写，检查空指针和长度，返回 Std_ReturnType。",
+    starter: `#include <stdint.h>
+
+#define E_OK 0U
+#define E_NOT_OK 1U
+#define NULL_PTR ((void *)0)
+typedef uint8_t Std_ReturnType;
+
+/* 写 Did_CopyValue */`,
+    checks: ["Did_CopyValue", "const uint8_t", "actualLen", "dstSize", "E_OK", "NULL_PTR"],
+    reference: `Std_ReturnType Did_CopyValue(uint8_t *dst, uint16_t dstSize, const uint8_t *src, uint16_t srcLen, uint16_t *actualLen)
+{
+    Std_ReturnType ret = E_NOT_OK;
+
+    if ((dst != NULL_PTR) && (src != NULL_PTR) && (actualLen != NULL_PTR) && (srcLen <= dstSize)) {
+        for (uint16_t i = 0U; i < srcLen; i++) {
+            dst[i] = src[i];
+        }
+        *actualLen = srcLen;
+        ret = E_OK;
+    }
+
+    return ret;
+}`
+  },
+  "week4-header-source": {
+    prompt: "写出 DidService.h 和 DidService.c 的骨架：头文件放公开声明，源文件放 static 内部函数。",
+    starter: `/* DidService.h */
+#ifndef DID_SERVICE_H
+#define DID_SERVICE_H
+
+/* 在这里写公开接口 */
+
+#endif
+
+/* DidService.c */
+/* 在这里写 static 内部函数和公开函数实现 */`,
+    checks: ["#ifndef", "#define", "#endif", "static", "DidService_Read"],
+    reference: `/* DidService.h */
+#ifndef DID_SERVICE_H
+#define DID_SERVICE_H
+
+#include <stdint.h>
+
+typedef uint8_t Std_ReturnType;
+Std_ReturnType DidService_Init(void);
+Std_ReturnType DidService_Read(uint16_t did, uint8_t *data, uint16_t dataSize, uint16_t *actualLen);
+
+#endif /* DID_SERVICE_H */
+
+/* DidService.c */
+static const uint8_t *DidService_FindData(uint16_t did, uint16_t *len)
+{
+    (void)did;
+    (void)len;
+    return (const uint8_t *)0;
+}
+
+Std_ReturnType DidService_Init(void)
+{
+    return 0U;
+}`
+  },
+  "week4-macro-preprocess": {
+    prompt: "写 CLAMP_U16 宏和 DID_DEV_ERROR_DETECT 条件编译示例，注意宏参数括号。",
+    starter: `#include <stdint.h>
+
+#define STD_ON 1U
+#define STD_OFF 0U
+#define DID_DEV_ERROR_DETECT STD_ON
+
+/* 写 CLAMP_U16 和条件编译 */`,
+    checks: ["#define", "CLAMP_U16", "((value)", "#if", "DID_DEV_ERROR_DETECT"],
+    reference: `#include <stdint.h>
+
+#define STD_ON 1U
+#define STD_OFF 0U
+#define DID_DEV_ERROR_DETECT STD_ON
+#define CLAMP_U16(value, min, max) (((value) < (min)) ? (min) : (((value) > (max)) ? (max) : (value)))
+
+void Did_ReportPointerError(void)
+{
+#if (DID_DEV_ERROR_DETECT == STD_ON)
+    /* Det_ReportError(...) */
+#endif
+}`
+  },
+  "week4-error-handling": {
+    prompt: "实现 Did_ReadByte：默认失败，检查指针和边界，成功时写输出参数。",
+    starter: `#include <stdint.h>
+
+#define E_OK 0U
+#define E_NOT_OK 1U
+#define NULL_PTR ((void *)0)
+typedef uint8_t Std_ReturnType;
+
+/* 写 Did_ReadByte */`,
+    checks: ["Did_ReadByte", "E_NOT_OK", "data != NULL_PTR", "value != NULL_PTR", "index < len", "E_OK"],
+    reference: `Std_ReturnType Did_ReadByte(const uint8_t *data, uint16_t len, uint16_t index, uint8_t *value)
+{
+    Std_ReturnType ret = E_NOT_OK;
+
+    if ((data != NULL_PTR) && (value != NULL_PTR) && (index < len)) {
+        *value = data[index];
+        ret = E_OK;
+    }
+
+    return ret;
+}`
+  },
+  "week4-review": {
+    prompt: "写简化 DidService_Read：检查初始化、指针、长度，并从配置表复制数据。",
+    starter: `#include <stdint.h>
+
+#define E_OK 0U
+#define E_NOT_OK 1U
+#define NULL_PTR ((void *)0)
+typedef uint8_t Std_ReturnType;
+
+/* 写 DidEntryType、初始化状态和 DidService_Read */`,
+    checks: ["DidEntryType", "static", "DidService_Read", "actualLen", "dataSize", "E_NOT_OK"],
+    reference: `typedef struct {
+    uint16_t did;
+    uint16_t length;
+    const uint8_t *data;
+} DidEntryType;
+
+static uint8_t didServiceInitialized = 0U;
+
+Std_ReturnType DidService_Read(uint16_t did, uint8_t *data, uint16_t dataSize, uint16_t *actualLen)
+{
+    Std_ReturnType ret = E_NOT_OK;
+
+    if ((didServiceInitialized != 0U) && (data != NULL_PTR) && (actualLen != NULL_PTR)) {
+        const DidEntryType *entry = DidService_Find(did);
+        if ((entry != NULL_PTR) && (entry->length <= dataSize)) {
+            for (uint16_t i = 0U; i < entry->length; i++) {
+                data[i] = entry->data[i];
+            }
+            *actualLen = entry->length;
+            ret = E_OK;
+        }
+    }
+
+    return ret;
+}`
   }
 };
 
@@ -1602,14 +2152,24 @@ function updateProgress() {
   });
 }
 
+function getWeekInfo(module) {
+  if (module.kicker.startsWith("Week 4")) {
+    return { key: "week4", label: "第 4 周 · 函数接口与模块化" };
+  }
+  if (module.kicker.startsWith("Week 3")) {
+    return { key: "week3", label: "第 3 周 · 结构体与内存" };
+  }
+  if (module.kicker.startsWith("Week 2")) {
+    return { key: "week2", label: "第 2 周 · 指针专项" };
+  }
+  return { key: "week1", label: "第 1 周 · C 底层基础" };
+}
+
 function renderNav() {
   let currentGroup = "";
   modules.forEach((module) => {
-    const group = module.kicker.startsWith("Week 3")
-          ? "第 3 周 · 结构体与内存"
-          : module.kicker.startsWith("Week 2")
-            ? "第 2 周 · 指针专项"
-            : "第 1 周 · C 底层基础";
+    const weekInfo = getWeekInfo(module);
+    const group = weekInfo.label;
     if (group !== currentGroup) {
       currentGroup = group;
       const groupEl = document.createElement("div");
@@ -1775,6 +2335,18 @@ function explainQuestion(question, correctOption) {
   if (q.includes("Std_ReturnType") || q.includes("输出")) {
     return "AUTOSAR 风格接口常用返回值表示成功失败，真正的数据通过输出指针带出；输出指针必须检查空指针和容量。";
   }
+  if (q.includes("头文件") || q.includes(".h") || q.includes("include guard")) {
+    return "头文件负责暴露模块接口，include guard 防止重复包含。函数实现和私有数据应尽量放在 .c 文件里，避免接口污染和重复定义。";
+  }
+  if (q.includes("static") || q.includes("内部")) {
+    return "static 修饰文件作用域函数或变量时，会把可见范围限制在当前 .c 文件内，适合隐藏模块内部实现细节。";
+  }
+  if (q.includes("宏") || q.includes("预处理") || q.includes("条件编译") || q.includes("STD_ON")) {
+    return "预处理发生在编译前，宏是文本替换，条件编译决定代码是否进入编译器。函数式宏要给参数加括号，并避免传入 i++ 这类有副作用的表达式。";
+  }
+  if (q.includes("DET") || q.includes("错误") || q.includes("E_NOT_OK") || q.includes("初始化")) {
+    return "嵌入式错误处理要先检查状态、指针、长度和范围。默认失败、条件满足才成功，是一种稳妥的接口写法；DET 常用于开发阶段暴露错误用法。";
+  }
   return `正确答案是“${correctOption}”。这道题考的是本节的核心概念：先判断数据在哪里、谁能修改它、边界是否安全。`;
 }
 
@@ -1782,7 +2354,9 @@ function renderModules() {
   moduleContainer.innerHTML = "";
   modules.forEach((module) => {
     const node = template.content.firstElementChild.cloneNode(true);
+    const weekInfo = getWeekInfo(module);
     node.id = module.id;
+    node.dataset.week = weekInfo.key;
     node.querySelector(".module-kicker").textContent = module.kicker;
     node.querySelector("h2").textContent = module.title;
     node.querySelector(".module-body").innerHTML = module.body;
