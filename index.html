@@ -10,7 +10,7 @@
   <body>
     <header class="topbar">
       <div class="brand-block">
-        <p class="eyebrow">3 个月 C 基础打牢计划 · 第 1-4 周</p>
+        <p class="eyebrow">面向 AUTOSAR BSW 的 C 与 TC3xx 基础路线 · 第 01-20 节</p>
         <h1>AUTOSAR 嵌入式 C 学习站</h1>
       </div>
       <div class="progress-panel" aria-label="学习进度">
@@ -75,8 +75,8 @@
       <aside class="sidebar" aria-label="课程导航">
         <div class="day-card">
           <span class="day-label">当前目标</span>
-          <strong>从内存地基走到模块接口</strong>
-          <p>第 1 周建立类型和内存直觉；第 2 周专攻指针；第 3 周理解结构体布局；第 4 周进入函数、头文件、宏和模块边界。</p>
+          <strong>从 C 地基走向 TC3xx BSW</strong>
+          <p>第 01-20 节先补齐类型、指针、结构体和模块接口。后续会逐步进入 TC3xx 内存、LSL、启动流程、MCAL 和 BSW 常用模块。</p>
         </div>
         <nav id="navList" class="nav-list"></nav>
       </aside>
@@ -100,7 +100,7 @@
                 <span>随堂题</span>
               </div>
               <div>
-                <strong>4 周</strong>
+                <strong>20 节</strong>
                 <span>当前内容</span>
               </div>
             </div>
@@ -118,6 +118,46 @@
               <strong>.bss</strong>
               <strong>stack</strong>
             </div>
+          </div>
+        </section>
+
+        <section class="roadmap" aria-label="长期学习路线图">
+          <div class="section-head">
+            <p class="eyebrow">长期迭代目录</p>
+            <h2>面向 TC3xx AUTOSAR BSW 的后续路线</h2>
+            <p>先把目录搭好，后面每次迭代都沿着这条线补讲解、练习和小测。目标不是泛泛学 C，而是为 BSW 基础软件岗位能读懂、能改动、能定位问题做准备。</p>
+          </div>
+          <div class="roadmap-grid">
+            <article>
+              <span>第 01-20 节</span>
+              <h3>C 工程地基</h3>
+              <p>类型、存储期、指针、结构体、函数接口、头文件、宏和错误处理。当前已上线，后续会继续打磨细节。</p>
+            </article>
+            <article>
+              <span>第 21-30 节</span>
+              <h3>TC3xx 平台入门</h3>
+              <p>TriCore 基础、多核概念、中断和 Trap、CSA、PFlash/DFlash、DSPR/PSPR、LMU、寄存器访问和调试直觉。</p>
+            </article>
+            <article>
+              <span>第 31-40 节</span>
+              <h3>LSL、启动和内存布局</h3>
+              <p>链接脚本、section 放置、启动代码、栈和 CSA、向量表、MemMap、编译器关键字、map 文件阅读和内存溢出定位。</p>
+            </article>
+            <article>
+              <span>第 41-55 节</span>
+              <h3>AUTOSAR BSW 基础</h3>
+              <p>Classic 分层、ECU Abstraction、MCAL、Services、EcuM、BswM、SchM、Det、Dem、OS 和 BSW 模块常见接口风格。</p>
+            </article>
+            <article>
+              <span>第 56-75 节</span>
+              <h3>TC3xx 常用 MCAL 模块</h3>
+              <p>Mcu、Port、Dio、Gpt、Wdg、Icu、Pwm、Adc、Spi、Can、Fls 等模块的配置入口、初始化顺序和常见调试点。</p>
+            </article>
+            <article>
+              <span>第 76 节以后</span>
+              <h3>存储、通信和项目实战</h3>
+              <p>MemIf、Fee、NvM、CanIf、PduR、Com、Dcm、诊断 DID、启动时序、配置生成、集成问题和真实排错案例。</p>
+            </article>
           </div>
         </section>
 
@@ -152,6 +192,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-c.min.js"></script>
-    <script src="./app.js?v=20260705-0935"></script>
+    <script src="./app.js?v=20260705-1105"></script>
   </body>
 </html>

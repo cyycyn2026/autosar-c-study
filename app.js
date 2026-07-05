@@ -1,11 +1,11 @@
 const modules = [
   {
     id: "day1-types",
-    kicker: "Day 1 · 基本类型",
+    kicker: "第 01 节 · 基本类型",
     title: "基本类型、宽度和嵌入式里的类型选择",
     summary: "char/int/float、stdint、sizeof、有符号和无符号",
     body: `
-      <h3>为什么第一天要先学类型</h3>
+      <h3>为什么第 01 节要先学类型</h3>
       <p>在普通应用开发里，很多人写 <code>int</code> 就够了；但在 AUTOSAR 和嵌入式里，类型不是小事。类型会影响 RAM 占用、寄存器访问、通信报文解析、溢出行为、接口兼容性和 MISRA 检查结果。</p>
       <p>C 标准只保证 <code>char</code>、<code>short</code>、<code>int</code>、<code>long</code> 之间有相对大小关系，并不保证 <code>int</code> 一定是 32 位。不同编译器、不同芯片、不同 ABI 下，类型宽度可能不同。嵌入式项目通常用 <code>stdint.h</code> 或 AUTOSAR 的 <code>Std_Types.h</code> 来固定宽度。</p>
 
@@ -24,7 +24,7 @@ const modules = [
       </div>
 
       <h3><code>sizeof</code> 不是函数</h3>
-      <p><code>sizeof</code> 是编译期运算符。它返回对象或类型占用的字节数。学习第 1 周时，你要养成一个习惯：看到变量就问自己，它占几个字节？它的范围是多少？它在表达式里会不会被提升？</p>
+      <p><code>sizeof</code> 是编译期运算符。它返回对象或类型占用的字节数。学习这一节时，你要养成一个习惯：看到变量就问自己，它占几个字节？它的范围是多少？它在表达式里会不会被提升？</p>
       <pre><code>#include &lt;stdio.h&gt;
 #include &lt;stdint.h&gt;
 
@@ -44,7 +44,7 @@ int main(void)
         不要随手把有符号和无符号混在一起比较。比如 <code>int len = -1;</code> 和 <code>uint16_t max = 10;</code> 比较时，可能发生你不期待的转换。
       </div>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>写一个程序，打印 <code>char</code>、<code>short</code>、<code>int</code>、<code>long</code>、<code>uint8_t</code>、<code>uint16_t</code>、<code>uint32_t</code> 的 <code>sizeof</code>。</li>
@@ -78,7 +78,7 @@ int main(void)
   },
   {
     id: "day2-storage",
-    kicker: "Day 2 · 变量与存储期",
+    kicker: "第 02 节 · 变量与存储期",
     title: "作用域、生命周期和变量到底放在哪里",
     summary: "局部变量、全局变量、static、extern、RAM/Flash 直觉",
     body: `
@@ -124,7 +124,7 @@ extern uint8_t Dcm_RxBuffer[8];</code></pre>
         不要在头文件里直接定义全局变量，比如 <code>uint8_t buffer[8];</code>。多个 <code>.c</code> 包含这个头文件时，可能造成重复定义。头文件里通常放 <code>extern</code> 声明，真正定义放在一个 <code>.c</code> 文件里。
       </div>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>写一个 <code>Counter.c</code>，内部有一个 <code>static uint32_t counter</code>，提供 <code>Counter_Inc</code> 和 <code>Counter_Get</code> 两个函数。</li>
@@ -158,7 +158,7 @@ extern uint8_t Dcm_RxBuffer[8];</code></pre>
   },
   {
     id: "day3-qualifiers",
-    kicker: "Day 3 · 关键修饰符",
+    kicker: "第 03 节 · 关键修饰符",
     title: "const、volatile 和嵌入式代码的真实意图",
     summary: "只读、寄存器、中断共享变量、优化器",
     body: `
@@ -213,7 +213,7 @@ void Can_Enable(void)
     CAN0-&gt;CTRL = 1U;
 }</code></pre>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>写出四种 <code>const</code> 指针声明，并用注释解释。</li>
@@ -247,7 +247,7 @@ void Can_Enable(void)
   },
   {
     id: "day4-conversion",
-    kicker: "Day 4 · 表达式与转换",
+    kicker: "第 04 节 · 表达式与转换",
     title: "整型提升、溢出和比较里的隐藏风险",
     summary: "integer promotion、隐式转换、溢出、MISRA 风格",
     body: `
@@ -291,7 +291,7 @@ if (len &lt; maxLen) {
     return ret;
 }</code></pre>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>写 <code>uint8_t a = 250U; uint8_t b = 10U;</code>，观察相加后赋给 <code>uint8_t</code> 的结果。</li>
@@ -325,16 +325,16 @@ if (len &lt; maxLen) {
   },
   {
     id: "day5-review",
-    kicker: "Day 5-7 · 复盘与周测",
-    title: "把第一周知识串起来：一个小型 Std_Types 练习",
-    summary: "复盘、代码练习、周末考核",
+    kicker: "第 05 节 · 阶段复盘",
+    title: "把第 01-05 节知识串起来：一个小型 Std_Types 练习",
+    summary: "复盘、代码练习、阶段考核",
     body: `
-      <h3>本周你真正要带走的东西</h3>
-      <p>第 1 周不要求你写出多复杂的程序，但要求你开始形成嵌入式 C 的底层直觉。以后看到任何一段代码，都先问：类型是什么？范围是什么？这个变量活多久？谁能访问它？它会不会被中断或硬件改掉？表达式里有没有隐藏转换？</p>
+      <h3>这一阶段你真正要带走的东西</h3>
+      <p>第 01-05 节不要求你写出多复杂的程序，但要求你开始形成嵌入式 C 的底层直觉。以后看到任何一段代码，都先问：类型是什么？范围是什么？这个变量活多久？谁能访问它？它会不会被中断或硬件改掉？表达式里有没有隐藏转换？</p>
 
-      <h3>周末综合练习：简化版 Std_Types + Buffer 模块</h3>
+      <h3>阶段综合练习：简化版 Std_Types + Buffer 模块</h3>
       <p>建立一个小工程，先不用复杂构建系统，几个文件就够。</p>
-      <pre><code>week1_project/
+      <pre><code>section01_05_project/
   Std_Types.h
   Buffer.h
   Buffer.c
@@ -396,7 +396,7 @@ uint16_t Buffer_CountValue(const uint8_t *buf, uint16_t len, uint8_t value);</co
         answer: 1
       },
       {
-        q: "第一周的核心不是背语法，而是建立什么？",
+        q: "第 01-05 节的核心不是背语法，而是建立什么？",
         options: ["UI 设计能力", "内存、类型、链接可见性的工程直觉", "数据库能力", "脚本语言能力"],
         answer: 1
       }
@@ -404,7 +404,7 @@ uint16_t Buffer_CountValue(const uint8_t *buf, uint16_t len, uint8_t value);</co
   },
   {
     id: "week2-address",
-    kicker: "Week 2 · Day 1",
+    kicker: "第 06 节 · 指针地址",
     title: "指针第一课：地址、取地址和指针变量",
     summary: "地址、&、指针变量、指针自己的内存",
     body: `
@@ -459,7 +459,7 @@ uint32_t *p32;  /* 指向 4 字节对象 */</code></pre>
     uint16_t SduLength;
 } PduInfoType;</code></pre>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>写一个程序，打印 <code>a</code>、<code>&a</code>、<code>p</code>、<code>&p</code>，并用自己的话解释每一行。</li>
@@ -493,7 +493,7 @@ uint32_t *p32;  /* 指向 4 字节对象 */</code></pre>
   },
   {
     id: "week2-deref",
-    kicker: "Week 2 · Day 2",
+    kicker: "第 07 节 · 解引用",
     title: "解引用：通过地址读写变量",
     summary: "*p、读写目标对象、空指针、const 指针入门",
     body: `
@@ -544,7 +544,7 @@ if (p != NULL_PTR) {
 int a = 10;
 SetTo100(&a); /* a 变成 100 */</code></pre>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>写一个 <code>SetValue(uint16_t *value, uint16_t newValue)</code>，要求检查空指针。</li>
@@ -578,7 +578,7 @@ SetTo100(&a); /* a 变成 100 */</code></pre>
   },
   {
     id: "week2-array",
-    kicker: "Week 2 · Day 3",
+    kicker: "第 08 节 · 数组与指针",
     title: "数组和指针：最容易混淆的一组关系",
     summary: "数组名退化、a[i]、p + 1、sizeof(a) 与 sizeof(p)",
     body: `
@@ -634,7 +634,7 @@ printf("%zu\\n", sizeof(p));    /* 指针变量大小，常见 4 或 8 */</code>
     return sum;
 }</code></pre>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>打印 <code>sizeof(data)</code> 和 <code>sizeof(p)</code>，解释差异。</li>
@@ -668,7 +668,7 @@ printf("%zu\\n", sizeof(p));    /* 指针变量大小，常见 4 或 8 */</code>
   },
   {
     id: "week2-params",
-    kicker: "Week 2 · Day 4",
+    kicker: "第 09 节 · 指针参数",
     title: "函数参数里的指针：输入、输出、输入输出",
     summary: "const 输入指针、输出参数、返回值、AUTOSAR 接口习惯",
     body: `
@@ -720,7 +720,7 @@ printf("%zu\\n", sizeof(p));    /* 指针变量大小，常见 4 或 8 */</code>
         带 <code>const</code> 多半是输入；非 <code>const</code> 指针可能会被写；如果还有长度参数，通常是在保护 buffer 边界；如果还有 <code>outLen</code>，说明函数会告诉你实际写了多少。
       </div>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>写 <code>ReadU16BigEndian(const uint8_t *data, uint16_t len, uint16_t *value)</code>。</li>
@@ -754,8 +754,8 @@ printf("%zu\\n", sizeof(p));    /* 指针变量大小，常见 4 或 8 */</code>
   },
   {
     id: "week2-danger",
-    kicker: "Week 2 · Day 5-7",
-    title: "危险指针和周末综合练习",
+    kicker: "第 10 节 · 指针综合",
+    title: "危险指针和阶段综合练习",
     summary: "野指针、悬空指针、越界、NULL、buffer 项目",
     body: `
       <h3>指针最常见的四类危险</h3>
@@ -789,9 +789,9 @@ data[8] = 0xAAU; /* 错误：最后一个有效下标是 7 */</code></pre>
         写任何接收指针的函数时，先写空指针检查；写任何访问数组的代码时，先写长度检查。这个习惯比记住很多语法细节更重要。
       </div>
 
-      <h3>周末综合项目：Pdu Buffer 小模块</h3>
+      <h3>阶段综合项目：Pdu Buffer 小模块</h3>
       <p>这个小项目贴近 AUTOSAR 通信栈里的 buffer 操作，目的是把指针、数组、长度和返回值串起来。</p>
-      <pre><code>week2_pointer_project/
+      <pre><code>section06_10_pointer_project/
   Std_Types.h
   PduBuffer.h
   PduBuffer.c
@@ -869,7 +869,7 @@ Std_ReturnType PduBuffer_WriteU16(
   },
   {
     id: "week3-struct",
-    kicker: "Week 3 · Day 1",
+    kicker: "第 11 节 · 结构体",
     title: "结构体：把不同类型的数据打包在一起",
     summary: "struct 定义、typedef、访问、初始化、嵌套结构体",
     body: `
@@ -906,7 +906,7 @@ pPdu->id = 0x123U;   /* 等价于 (*pPdu).id */</code></pre>
         看到结构体定义时，先问自己：每个字段占多少字节？整个结构体 sizeof 是多少？有没有 padding？字段顺序会不会影响大小？
       </div>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>定义一个 <code>DidConfigType</code>，包含 <code>uint16_t did</code>、<code>uint8_t length</code>、<code>uint8_t data[8]</code>。</li>
@@ -960,7 +960,7 @@ pPdu->id = 0x123U;   /* 等价于 (*pPdu).id */</code></pre>
   },
   {
     id: "week3-union",
-    kicker: "Week 3 · Day 2",
+    kicker: "第 12 节 · 联合体",
     title: "联合体：共享同一块内存的多种解释方式",
     summary: "union 定义、大小端、字节访问、协议解析中的实际用途",
     body: `
@@ -988,7 +988,7 @@ u.word = 0x12345678U;
       <h3>AUTOSAR 里的典型用途</h3>
       <p>联合体常用于协议解析：报文既想按 32 位寄存器读写，又想按字节解析。也用于配置表：同一个表项在不同条件下代表不同含义。</p>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>定义一个 <code>RegAccessType</code> union，包含 <code>uint32_t word</code> 和 <code>uint8_t bytes[4]</code>。</li>
@@ -1042,7 +1042,7 @@ u.word = 0x12345678U;
   },
   {
     id: "week3-bitfield",
-    kicker: "Week 3 · Day 3",
+    kicker: "第 13 节 · 位域",
     title: "位域：精确控制每个 bit 的含义",
     summary: "bit-field 定义、布局、对齐陷阱、寄存器位域映射",
     body: `
@@ -1068,7 +1068,7 @@ u.word = 0x12345678U;
       <h3>AUTOSAR 中的典型用法</h3>
       <p>状态寄存器映射、配置字解析、通信协议中的标志位字段，都常用位域。但 AUTOSAR 规范（如 MISRA-C）对位域使用有一些限制，比如不建议位域成员跨越类型边界。</p>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>定义一个 16 位寄存器位域：<code>enable:1</code>、<code>mode:3</code>、<code>status:4</code>、<code>reserved:8</code>。</li>
@@ -1122,7 +1122,7 @@ u.word = 0x12345678U;
   },
   {
     id: "week3-alignment",
-    kicker: "Week 3 · Day 4",
+    kicker: "第 14 节 · 对齐与布局",
     title: "内存对齐与填充：sizeof 为什么不等于字段之和",
     summary: "自然对齐、padding、packed 属性、编译器差异、MISRA 限制",
     body: `
@@ -1155,7 +1155,7 @@ u.word = 0x12345678U;
       <h3>MISRA 限制</h3>
       <p>MISRA-C 对位域和结构体使用有一些限制，比如位域应使用明确的无符号类型，不建议位域跨越类型边界。结构体定义应尽量跨编译器可移植。</p>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>定义一个含 <code>uint8_t</code>、<code>uint32_t</code>、<code>uint8_t</code> 的结构体，打印 <code>sizeof</code> 并解释 padding。</li>
@@ -1209,16 +1209,16 @@ u.word = 0x12345678U;
   },
   {
     id: "week3-review",
-    kicker: "Week 3 · Day 5-7",
+    kicker: "第 15 节 · 内存布局综合",
     title: "把结构体、联合体、位域和对齐串起来",
-    summary: "周末综合：实现一个寄存器配置解析器小模块",
+    summary: "阶段综合：实现一个寄存器配置解析器小模块",
     body: `
-      <h3>本周核心目标</h3>
-      <p>第 3 周的核心不是记住语法，而是建立<strong>内存布局直觉</strong>：看到结构体就想到 sizeof 和 padding；看到联合体就想到共享内存；看到位域就想到编译器依赖；看到对齐就想到字段顺序影响。</p>
+      <h3>本阶段核心目标</h3>
+      <p>第 11-15 节的核心不是记住语法，而是建立<strong>内存布局直觉</strong>：看到结构体就想到 sizeof 和 padding；看到联合体就想到共享内存；看到位域就想到编译器依赖；看到对齐就想到字段顺序影响。</p>
 
-      <h3>周末综合项目：寄存器配置解析器</h3>
+      <h3>阶段综合项目：寄存器配置解析器</h3>
       <p>模拟一个 AUTOSAR 通信模块的寄存器配置，需要同时用到结构体、联合体和位域。</p>
-      <pre><code>week3_project/
+      <pre><code>section11_15_project/
   RegConfig.h
   RegConfig.c
   main.c</code></pre>
@@ -1287,7 +1287,7 @@ u.word = 0x12345678U;
             "answer": 0
       },
       {
-            "q": "第 3 周的核心不是背语法，而是建立什么？",
+            "q": "第 11-15 节的核心不是背语法，而是建立什么？",
             "options": [
                   "内存布局直觉",
                   "绘图能力",
@@ -1310,11 +1310,11 @@ u.word = 0x12345678U;
   },
   {
     id: "week4-function-interface",
-    kicker: "Week 4 · Day 1",
+    kicker: "第 16 节 · 函数接口",
     title: "函数接口：输入、输出、返回值和副作用",
     summary: "函数原型、参数方向、输出指针、返回值、接口契约",
     body: `
-      <h3>为什么第 4 周先讲函数接口</h3>
+      <h3>为什么这一节先讲函数接口</h3>
       <p>在 AUTOSAR 项目里，你写的不是一个孤立的 <code>main</code>，而是一堆被 RTE、BSW、上层模块调用的函数。函数接口就是模块之间的合同：调用者给什么，函数能改什么，失败时怎么返回，输出结果放在哪里。</p>
       <p>很多 C 初学者会把函数写成“能跑就行”，但嵌入式项目更关心<strong>接口边界是否清楚</strong>。一个好的接口，别人只看函数原型就能知道参数方向和错误处理方式。</p>
 
@@ -1349,7 +1349,7 @@ u.word = 0x12345678U;
 typedef uint8_t Std_ReturnType;</code></pre>
       <p>返回值只表达“本次调用是否成功”。真正的数据通常通过输出指针带出。这样做的好处是接口风格统一，调用者可以用同一种模式处理错误。</p>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>写一个 <code>Did_CopyValue</code> 函数，把输入数据复制到输出 buffer。</li>
@@ -1389,7 +1389,7 @@ typedef uint8_t Std_ReturnType;</code></pre>
   },
   {
     id: "week4-header-source",
-    kicker: "Week 4 · Day 2",
+    kicker: "第 17 节 · 头文件和源文件",
     title: "头文件和源文件：把模块边界写清楚",
     summary: ".h/.c 拆分、声明和定义、include guard、static 内部函数",
     body: `
@@ -1435,7 +1435,7 @@ Std_ReturnType DidService_Init(void)
         把函数实现写进头文件，或者在头文件里定义普通全局变量。这样多个 <code>.c</code> 同时包含时，容易造成重复定义。
       </div>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>设计 <code>DidService.h</code>，包含 include guard 和公开函数声明。</li>
@@ -1474,7 +1474,7 @@ Std_ReturnType DidService_Init(void)
   },
   {
     id: "week4-macro-preprocess",
-    kicker: "Week 4 · Day 3",
+    kicker: "第 18 节 · 预处理和宏",
     title: "预处理和宏：编译前发生了什么",
     summary: "#define、条件编译、函数式宏、宏副作用、配置开关",
     body: `
@@ -1509,7 +1509,7 @@ Std_ReturnType DidService_Read(uint16_t did, uint8_t *data, uint16_t size);
         <li><code>DET</code>、<code>DEM</code> 相关宏：错误检测和诊断事件配置。</li>
       </ul>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>写一个 <code>CLAMP_U16(value, min, max)</code> 宏，要求参数都加括号。</li>
@@ -1548,7 +1548,7 @@ Std_ReturnType DidService_Read(uint16_t did, uint8_t *data, uint16_t size);
   },
   {
     id: "week4-error-handling",
-    kicker: "Week 4 · Day 4",
+    kicker: "第 19 节 · 错误处理",
     title: "错误处理：先失败得清楚，再成功得稳定",
     summary: "参数检查、错误码、早返回、DET 思路、防御式编程",
     body: `
@@ -1586,7 +1586,7 @@ if (data == NULL_PTR) {
         先检查模块状态，再检查指针，再检查长度和范围，最后才访问内存或硬件寄存器。
       </div>
 
-      <h3>今天的练习</h3>
+      <h3>本节练习</h3>
       <div class="practice">
         <ol>
           <li>实现 <code>Did_ReadByte</code>，读取 buffer 指定位置的一个字节。</li>
@@ -1626,15 +1626,15 @@ if (data == NULL_PTR) {
   },
   {
     id: "week4-review",
-    kicker: "Week 4 · Day 5-7",
-    title: "周末综合：写一个简化 DID 服务模块",
+    kicker: "第 20 节 · DID 服务综合",
+    title: "阶段综合：写一个简化 DID 服务模块",
     summary: "综合函数接口、头文件、宏、错误处理和模块拆分",
     body: `
-      <h3>本周综合目标</h3>
-      <p>第 4 周的目标是把“会写函数”推进到“会写一个小模块”。你要能把公开接口放进头文件，把内部实现藏在源文件里，用宏控制配置，用返回值表达错误，用指针安全地传递数据。</p>
+      <h3>本阶段综合目标</h3>
+      <p>第 16-20 节的目标是把“会写函数”推进到“会写一个小模块”。你要能把公开接口放进头文件，把内部实现藏在源文件里，用宏控制配置，用返回值表达错误，用指针安全地传递数据。</p>
 
       <h3>项目结构</h3>
-      <pre><code>week4_project/
+      <pre><code>section16_20_project/
   Std_Types.h
   DidService_Cfg.h
   DidService.h
@@ -1704,7 +1704,7 @@ Std_ReturnType DidService_Read(
         answer: 0
       },
       {
-        q: "第 4 周综合练习真正训练的是什么？",
+        q: "第 16-20 节综合练习真正训练的是什么？",
         options: ["模块边界和接口安全", "网页动画", "动态内存分配", "浮点优化"],
         answer: 0
       }
@@ -2152,24 +2152,25 @@ function updateProgress() {
   });
 }
 
-function getWeekInfo(module) {
-  if (module.kicker.startsWith("Week 4")) {
-    return { key: "week4", label: "第 4 周 · 函数接口与模块化" };
+function getStageInfo(module) {
+  const section = Number(module.kicker.match(/第\s*(\d+)\s*节/)?.[1] || 1);
+  if (section >= 16) {
+    return { key: "stage4", label: "第 16-20 节 · 函数接口与模块化" };
   }
-  if (module.kicker.startsWith("Week 3")) {
-    return { key: "week3", label: "第 3 周 · 结构体与内存" };
+  if (section >= 11) {
+    return { key: "stage3", label: "第 11-15 节 · 结构体与内存布局" };
   }
-  if (module.kicker.startsWith("Week 2")) {
-    return { key: "week2", label: "第 2 周 · 指针专项" };
+  if (section >= 6) {
+    return { key: "stage2", label: "第 06-10 节 · 指针专项" };
   }
-  return { key: "week1", label: "第 1 周 · C 底层基础" };
+  return { key: "stage1", label: "第 01-05 节 · C 底层基础" };
 }
 
 function renderNav() {
   let currentGroup = "";
   modules.forEach((module) => {
-    const weekInfo = getWeekInfo(module);
-    const group = weekInfo.label;
+    const stageInfo = getStageInfo(module);
+    const group = stageInfo.label;
     if (group !== currentGroup) {
       currentGroup = group;
       const groupEl = document.createElement("div");
@@ -2354,9 +2355,9 @@ function renderModules() {
   moduleContainer.innerHTML = "";
   modules.forEach((module) => {
     const node = template.content.firstElementChild.cloneNode(true);
-    const weekInfo = getWeekInfo(module);
+    const stageInfo = getStageInfo(module);
     node.id = module.id;
-    node.dataset.week = weekInfo.key;
+    node.dataset.stage = stageInfo.key;
     node.querySelector(".module-kicker").textContent = module.kicker;
     node.querySelector("h2").textContent = module.title;
     node.querySelector(".module-body").innerHTML = module.body;

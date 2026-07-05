@@ -722,6 +722,88 @@ html.dark .hero-copy h2 {
   box-shadow: var(--shadow-sm);
 }
 
+/* ===== 长期路线图 ===== */
+.roadmap {
+  margin: 0 0 24px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--paper), var(--paper-2));
+  box-shadow: var(--shadow);
+}
+
+.section-head {
+  max-width: 860px;
+  margin-bottom: 18px;
+}
+
+.section-head h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.section-head p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.roadmap-grid article {
+  min-height: 184px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #fbfcfb, #f4f8f6);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.roadmap-grid article:hover {
+  transform: translateY(-2px);
+  border-color: rgba(13,138,110,0.25);
+  box-shadow: var(--shadow-sm);
+}
+
+.roadmap-grid span {
+  display: inline-flex;
+  margin-bottom: 10px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.roadmap-grid h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.roadmap-grid p {
+  margin: 0;
+  color: #405149;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+html.dark .roadmap-grid article {
+  background: linear-gradient(135deg, #14201b, #101a16);
+}
+
+html.dark .roadmap-grid p {
+  color: #c5d7cf;
+}
+
 /* ===== 模块卡片 ===== */
 .modules {
   display: grid;
@@ -739,19 +821,19 @@ html.dark .hero-copy h2 {
   box-shadow: var(--shadow-md);
 }
 
-.module[data-week="week1"] {
+.module[data-stage="stage1"] {
   border-left-color: #0d8a6e;
 }
 
-.module[data-week="week2"] {
+.module[data-stage="stage2"] {
   border-left-color: #3b82f6;
 }
 
-.module[data-week="week3"] {
+.module[data-stage="stage3"] {
   border-left-color: #a855f7;
 }
 
-.module[data-week="week4"] {
+.module[data-stage="stage4"] {
   border-left-color: #e05a3a;
 }
 
@@ -766,17 +848,17 @@ html.dark .hero-copy h2 {
   position: relative;
 }
 
-.module[data-week="week2"] .module-head {
+.module[data-stage="stage2"] .module-head {
   background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(255,255,255,0)),
     linear-gradient(135deg, #fbfcff, #f4f7fb);
 }
 
-.module[data-week="week3"] .module-head {
+.module[data-stage="stage3"] .module-head {
   background: linear-gradient(90deg, rgba(168,85,247,0.08), rgba(255,255,255,0)),
     linear-gradient(135deg, #fdfbff, #f7f3fb);
 }
 
-.module[data-week="week4"] .module-head {
+.module[data-stage="stage4"] .module-head {
   background: linear-gradient(90deg, rgba(224,90,58,0.09), rgba(255,255,255,0)),
     linear-gradient(135deg, #fffcfb, #fbf5f2);
 }
@@ -814,15 +896,15 @@ html.dark .hero-copy h2 {
   border-radius: 50%;
 }
 
-.module[data-week="week2"] .module-kicker::before {
+.module[data-stage="stage2"] .module-kicker::before {
   background: linear-gradient(135deg, #3b82f6, #60a5fa);
 }
 
-.module[data-week="week3"] .module-kicker::before {
+.module[data-stage="stage3"] .module-kicker::before {
   background: linear-gradient(135deg, #a855f7, #c084fc);
 }
 
-.module[data-week="week4"] .module-kicker::before {
+.module[data-stage="stage4"] .module-kicker::before {
   background: linear-gradient(135deg, var(--accent-2), var(--accent-2-light));
 }
 
@@ -1577,6 +1659,10 @@ html.dark .module-nav {
     grid-template-columns: 1fr;
   }
 
+  .roadmap-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .memory-map {
     order: -1;
   }
@@ -1604,6 +1690,14 @@ html.dark .module-nav {
   }
 
   .hero-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .roadmap {
+    padding: 18px;
+  }
+
+  .roadmap-grid {
     grid-template-columns: 1fr;
   }
 
