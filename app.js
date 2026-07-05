@@ -865,6 +865,8 @@ Std_ReturnType PduBuffer_WriteU16(
         options: ["可能破坏其他内存，导致异常或隐蔽错误", "只会自动忽略", "一定会编译失败", "只影响注释"],
         answer: 0
       }
+    ]
+  },
   {
     id: "week3-struct",
     kicker: "Week 3 · Day 1",
@@ -1372,15 +1374,14 @@ const practiceLabs = {
     starter: "#include <stdint.h>\n#define E_OK 0U\n#define E_NOT_OK 1U\n#define NULL_PTR ((void *)0)\ntypedef uint8_t Std_ReturnType;\n\n/* 写 PduBuffer_Copy */",
     checks: ["PduBuffer_Copy", "copiedLen", "dstSize", "srcLen", "NULL_PTR"],
     reference: "Std_ReturnType PduBuffer_Copy(uint8_t *dst, uint16_t dstSize, const uint8_t *src, uint16_t srcLen, uint16_t *copiedLen)\n{\n    Std_ReturnType ret = E_NOT_OK;\n\n    if ((dst != NULL_PTR) && (src != NULL_PTR) && (copiedLen != NULL_PTR) && (srcLen <= dstSize)) {\n        for (uint16_t i = 0U; i < srcLen; i++) {\n            dst[i] = src[i];\n        }\n        *copiedLen = srcLen;\n        ret = E_OK;\n    }\n\n    return ret;\n}"
-  }
-,
+  },
   "week3-struct": {
     prompt: "定义 DidConfigType 结构体，含 did/length/data[8]，用指定初始化创建两个配置项。",
-    starter: "#include <stdint.h>
+    starter: `#include <stdint.h>
 
-/* 定义 DidConfigType */",
+/* 定义 DidConfigType */`,
     checks: ["typedef struct", "uint16_t", "uint8_t", "data[8]", "DidConfigType"],
-    reference: "#include <stdint.h>
+    reference: `#include <stdint.h>
 
 typedef struct {
     uint16_t did;
@@ -1393,15 +1394,15 @@ int main(void)
     DidConfigType cfg1 = { .did = 0xF190U, .length = 4U, .data = { 0x01U, 0x02U, 0x03U, 0x04U } };
     DidConfigType cfg2 = { .did = 0xF187U, .length = 2U, .data = { 0xAAU, 0xBBU } };
     return 0;
-}"
-  }
+}`
+  },
   "week3-union": {
     prompt: "定义 RegAccessType 联合体，通过 bytes 数组取出 uint32_t 的指定字节。",
-    starter: "#include <stdint.h>
+    starter: `#include <stdint.h>
 
-/* 定义 RegAccessType 和 GetU32Byte */",
+/* 定义 RegAccessType 和 GetU32Byte */`,
     checks: ["typedef union", "uint32_t", "uint8_t", "bytes[4]", "GetU32Byte"],
-    reference: "#include <stdint.h>
+    reference: `#include <stdint.h>
 
 typedef union {
     uint32_t word;
@@ -1413,16 +1414,16 @@ uint8_t GetU32Byte(uint32_t value, uint8_t index)
     RegAccessType u;
     u.word = value;
     return (index < 4U) ? u.bytes[index] : 0U;
-}"
-  }
+}`
+  },
   "week3-bitfield": {
     prompt: "定义一个 16 位寄存器位域（enable:1, mode:3, status:4, reserved:8），设置值并打印。",
-    starter: "#include <stdint.h>
+    starter: `#include <stdint.h>
 #include <stdio.h>
 
-/* 定义位域结构体 */",
+/* 定义位域结构体 */`,
     checks: ["uint16_t", ": 1", ": 3", ": 4", ": 8", "enable", "mode"],
-    reference: "#include <stdint.h>
+    reference: `#include <stdint.h>
 #include <stdio.h>
 
 typedef struct {
@@ -1438,16 +1439,16 @@ int main(void)
     printf("sizeof = %zu\n", sizeof(RegBitsType));
     printf("value = 0x%04X\n", *(uint16_t *)&reg);
     return 0;
-}"
-  }
+}`
+  },
   "week3-alignment": {
     prompt: "定义含 uint8_t + uint32_t + uint8_t 的结构体，打印 sizeof，再调整顺序观察变化。",
-    starter: "#include <stdint.h>
+    starter: `#include <stdint.h>
 #include <stdio.h>
 
-/* 定义结构体并打印 sizeof */",
+/* 定义结构体并打印 sizeof */`,
     checks: ["typedef struct", "uint8_t", "uint32_t", "sizeof", "printf"],
-    reference: "#include <stdint.h>
+    reference: `#include <stdint.h>
 #include <stdio.h>
 
 typedef struct {
@@ -1467,15 +1468,15 @@ int main(void)
     printf("SampleType = %zu\n", sizeof(SampleType));
     printf("OptimizedType = %zu\n", sizeof(OptimizedType));
     return 0;
-}"
-  }
+}`
+  },
   "week3-review": {
     prompt: "实现 RegControl_SetMode 和 RegControl_GetPrescale，使用位域联合体。",
-    starter: "#include <stdint.h>
+    starter: `#include <stdint.h>
 
-/* 定义 RegControlType 和函数 */",
+/* 定义 RegControlType 和函数 */`,
     checks: ["typedef union", "uint32_t", ":", "RegControl_SetMode", "RegControl_GetPrescale"],
-    reference: "#include <stdint.h>
+    reference: `#include <stdint.h>
 
 typedef union {
     uint32_t raw;
@@ -1500,7 +1501,7 @@ uint8_t RegControl_GetPrescale(uint32_t reg)
     RegControlType u;
     u.raw = reg;
     return (uint8_t)u.bits.prescale;
-}"
+}`
   }
 };
 
@@ -1938,14 +1939,6 @@ function startAppForStudent(name) {
   wrongBookBtn.style.display = "inline-block";
   loginOverlay.classList.add("is-hidden");
 }
-  loadStudent(name);
-  if (navList.children.length === 0) {
-    renderNav();
-  }
-  renderModules();
-  updateProgress();
-  wrongBookBtn.style.display = "inline-block";
-}
 
 loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -2039,7 +2032,7 @@ window.addEventListener("scroll", () => {
 /* ESC 键关闭弹窗 */
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
-    if (!loginOverlay.classList.contains("is-hidden")) {
+    if (currentStudent && !loginOverlay.classList.contains("is-hidden")) {
       loginOverlay.classList.add("is-hidden");
     }
     if (!adminPanel.classList.contains("is-hidden")) {
