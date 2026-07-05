@@ -1709,6 +1709,304 @@ Std_ReturnType DidService_Read(
         answer: 0
       }
     ]
+  },
+  {
+    id: "case-can-nm",
+    kicker: "第 21 节 · 脱敏案例：CAN 网络管理",
+    title: "CAN/CANFD 网络管理：为什么 ECU 要一起睡、一起醒",
+    summary: "NM PDU、网络模式、重复消息、就绪睡眠、总线睡眠",
+    body: `
+      <h3>先说明：本节是脱敏后的通用知识</h3>
+      <p>本节来自工程资料的通用知识点整理，不引用企业文档原文，不保留企业名、项目名、节点名、内部编号或真实参数。你只需要掌握 AUTOSAR CAN 网络管理的工程思想：<strong>一个网络上的 ECU 如何协调唤醒、保持通信、准备睡眠和进入总线睡眠</strong>。</p>
+
+      <h3>网络管理解决什么问题</h3>
+      <p>车上的 ECU 不是一直都要通信。为了降低功耗，某些网络在不需要通信时会进入低功耗或总线睡眠状态。但只要还有一个节点需要通信，整个网段就不能随便睡下去。CAN 网络管理的核心，就是让所有节点通过网络管理报文互相表达：“我还需要这个网络保持唤醒”或者“我已经准备睡眠”。</p>
+      <p>你可以把 NM 报文理解成一种“网络还要不要继续醒着”的心跳。主动节点会周期发送 NM PDU；其他节点收到 NM PDU 后知道：总线上还有节点需要通信，所以不能马上进入睡眠。</p>
+
+      <h3>几个必须先记住的词</h3>
+      <ul>
+        <li><strong>NM PDU</strong>：Network Management PDU，网络管理报文。</li>
+        <li><strong>Network Mode</strong>：网络模式，节点处于可通信状态。</li>
+        <li><strong>Repeat Message State</strong>：重复消息状态，常用于唤醒后快速发送 NM 报文，让其他节点尽快知道网络被唤醒。</li>
+        <li><strong>Normal Operation State</strong>：正常运行状态，节点正常周期发送/接收 NM 报文。</li>
+        <li><strong>Ready Sleep State</strong>：就绪睡眠状态，节点自己不再需要网络，但仍在观察总线上是否还有其他节点需要通信。</li>
+        <li><strong>Prepare Bus-Sleep Mode</strong>：准备总线睡眠模式，网络即将进入睡眠前的过渡阶段。</li>
+        <li><strong>Bus-Sleep Mode</strong>：总线睡眠模式，网络通信停止，进入低功耗状态。</li>
+      </ul>
+
+      <h3>状态机直觉</h3>
+      <p>网络管理不是一个 if 语句，而是状态机。你读 BSW 代码时，经常会看到“当前状态 + 事件 + 计时器”决定下一步状态。比如：</p>
+      <ul>
+        <li>本地节点需要通信：从睡眠相关状态回到网络模式。</li>
+        <li>收到远程 NM 报文：说明别的节点还需要网络，不能睡。</li>
+        <li>长时间没有收到 NM 报文：可能进入准备睡眠，再进入总线睡眠。</li>
+        <li>发送失败或 BusOff：不应该随便破坏状态机，通常要按项目策略处理。</li>
+      </ul>
+
+      <h3>主动模式和被动模式</h3>
+      <p>有些节点既能发送 NM 报文，也能接收 NM 报文，这类节点可以主动维持网络唤醒；有些节点只接收 NM 报文，不主动发送，这类节点更像“跟随者”。工程上读配置时，要先确认节点是主动网络管理节点，还是被动网络管理节点。</p>
+
+      <h3>部分网络 PN 的直觉</h3>
+      <p>部分网络管理的思想是：不是每次唤醒都必须把所有 ECU 全部叫醒，而是只唤醒某个功能需要的一组节点。对初学者来说，不必一上来背所有 PN 字段，先记住一句话：<strong>PN 是为了更细粒度地控制哪些节点需要醒来</strong>。</p>
+
+      <h3>读 CanNm 相关代码时看什么</h3>
+      <ol>
+        <li>模块当前处于哪个模式或状态。</li>
+        <li>本地是否有通信请求。</li>
+        <li>是否收到了 NM PDU。</li>
+        <li>关键计时器是否超时。</li>
+        <li>发送 NM PDU 的周期、立即发送次数、偏移时间是否来自配置。</li>
+        <li>BusOff、发送失败、睡眠请求这些异常路径如何处理。</li>
+      </ol>
+
+      <div class="note">
+        <strong>学习重点：</strong>
+        网络管理最重要的不是记住每个状态名字，而是看懂“状态 + 事件 + 定时器”的跳转逻辑。以后你读 EcuM、BswM、CanSM、ComM，也会反复遇到这种思路。
+      </div>
+
+      <h3>本节练习</h3>
+      <div class="practice">
+        <ol>
+          <li>画一个简化状态机：Bus-Sleep、Repeat Message、Normal Operation、Ready Sleep。</li>
+          <li>写出 3 个会让节点保持唤醒的原因。</li>
+          <li>用伪代码写一个 <code>Nm_MainFunction</code>：根据本地请求、是否收到 NM、定时器是否超时进行状态跳转。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+        q: "CAN 网络管理最核心的目标是什么？",
+        options: ["协调节点唤醒、保持通信和进入睡眠", "提高 C 语言编译速度", "替代 UDS 诊断", "保存所有 DTC"],
+        answer: 0
+      },
+      {
+        q: "收到其他节点发送的 NM PDU 通常说明什么？",
+        options: ["总线上仍有节点需要网络保持唤醒", "Flash 已经擦除完成", "所有节点必须立刻睡眠", "DTC 一定被清除"],
+        answer: 0
+      },
+      {
+        q: "Ready Sleep State 的直觉含义是什么？",
+        options: ["本节点准备睡眠，但还要观察网络", "节点正在刷写 Flash", "节点只能发送诊断响应", "节点已经断电"],
+        answer: 0
+      },
+      {
+        q: "部分网络 PN 的主要目的是什么？",
+        options: ["只唤醒某个功能需要的一组节点", "让所有节点永远在线", "增加 DTC 字节数", "替代 MemMap"],
+        answer: 0
+      },
+      {
+        q: "读网络管理代码时最应该关注哪组信息？",
+        options: ["状态、事件和计时器", "作者姓名和文档编号", "网页字体大小", "变量名是否足够长"],
+        answer: 0
+      }
+    ]
+  },
+  {
+    id: "case-dtc-upload",
+    kicker: "第 22 节 · 脱敏案例：DTC 主动上传",
+    title: "DTC 主动上传：从 DEM 状态变化到 CAN 报文",
+    summary: "DTC 三字节码、状态字节、变化检测、队列、周期发送",
+    body: `
+      <h3>本节要解决的问题</h3>
+      <p>诊断系统里，DTC 不只是“有没有故障”这么简单。工程中经常需要在故障新增、故障状态变化、故障清除时，把 DTC 码和状态主动发送到总线上，供其他节点、网关或上传模块进一步处理。本节只讲通用设计方法，不使用任何企业项目的真实信号名、报文 ID 或内部需求编号。</p>
+
+      <h3>DTC 数据通常怎么放进 8 字节报文</h3>
+      <p>一个常见设计是：一个 DTC 用 4 个字节表示，前 3 个字节是 DTC 码，最后 1 个字节是状态。这样 8 字节 CAN 数据场可以放两个 DTC：</p>
+      <pre><code>Byte0  DTC1 high byte
+Byte1  DTC1 middle byte
+Byte2  DTC1 low byte
+Byte3  DTC1 status
+Byte4  DTC2 high byte
+Byte5  DTC2 middle byte
+Byte6  DTC2 low byte
+Byte7  DTC2 status</code></pre>
+      <p>如果当前没有要上传的 DTC，可以发送全 0，或者根据项目需求不发送。真实项目怎么做，要看通信矩阵、诊断规范和系统需求。</p>
+
+      <h3>为什么要比较状态变化</h3>
+      <p>主动上传不是每个周期把所有 DTC 全部发一遍，否则会浪费总线带宽。更常见的做法是保存上一周期的 DTC 状态，再和当前 DEM 状态比较。只要关注的状态位发生变化，就把这个事件放入待发送队列。</p>
+      <p>例如 UDS status byte 里常见的关注点包括：当前测试失败、确认故障、历史故障、清除后的状态变化等。不同项目会选择不同掩码。学习时你先掌握模式：<strong>旧状态 masked 后，与新状态 masked 后比较</strong>。</p>
+
+      <pre><code>if ((oldStatus[eventId] &amp; DTC_UPLOAD_MASK) !=
+    (newStatus[eventId] &amp; DTC_UPLOAD_MASK)) {
+    Queue_Push(eventId);
+}
+
+oldStatus[eventId] = newStatus[eventId];</code></pre>
+
+      <h3>为什么需要队列</h3>
+      <p>一个 8 字节报文一次最多只能放两个 DTC。如果某个周期内有多个 DTC 同时变化，就不能一次全发完。队列的作用是把“待上传事件”暂存起来，然后每个发送周期取出 1 个或 2 个，组装成报文。</p>
+
+      <h3>上电延时和周期分频</h3>
+      <p>很多 BSW 小模块不会每次主函数调用都做重活，而是通过计数器分频。例如 RTE 每 100ms 调一次主函数，模块内部每 5 次才真正上传一次，就形成约 500ms 的发送节奏。还有些模块上电后会延时几秒再允许上传，避免系统刚启动时诊断状态还不稳定。</p>
+
+      <h3>一个脱敏后的设计骨架</h3>
+      <pre><code>void DtcUpload_MainFunction(void)
+{
+    DtcUpload_UpdateDelay();
+
+    if (DtcUpload_IsAllowed() == TRUE) {
+        if (DtcUpload_IsSendTick() == TRUE) {
+            DtcUpload_DetectChangedEvents();
+            DtcUpload_SendNextFrame();
+        }
+    }
+}</code></pre>
+
+      <h3>设计时必须想清楚的边界</h3>
+      <ul>
+        <li>初始化时是否把当前 DEM 状态作为基准。</li>
+        <li>清除故障时是否需要发送一次状态为 0 的 DTC。</li>
+        <li>队列满了怎么办：丢弃、覆盖、上报 DET，还是计数统计。</li>
+        <li>同一个 DTC 连续变化时，队列里是否允许重复。</li>
+        <li>下电流程、网络即将睡眠、延时下电期间是否允许发送。</li>
+        <li>报文全 0 是“无待上传 DTC”，还是“有效清零信号”。</li>
+      </ul>
+
+      <div class="warning">
+        <strong>工程注意：</strong>
+        公开学习网站不能放真实 DTC 列表、报文 ID、信号名、项目控制器名称和内部需求编号。学习时只保留模式：检测变化、入队、周期出队、组帧发送。
+      </div>
+
+      <h3>本节练习</h3>
+      <div class="practice">
+        <ol>
+          <li>实现一个长度为 8 的简单 FIFO，存储变化的事件 ID。</li>
+          <li>写一个函数，把 24 位 DTC code 拆成 high/middle/low 三个字节。</li>
+          <li>写一个函数，每次从队列取两个事件，组装成 8 字节上传帧。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+        q: "一个常见的 DTC 主动上传帧里，一个 DTC 通常占几个字节？",
+        options: ["4 字节：3 字节 DTC 码 + 1 字节状态", "1 字节：只发状态", "8 字节：只能发一个 DTC", "0 字节：DTC 不进 CAN 报文"],
+        answer: 0
+      },
+      {
+        q: "为什么主动上传模块通常要保存上一周期状态？",
+        options: ["为了判断状态是否发生变化", "为了替代编译器", "为了让 RAM 永远不变", "为了隐藏函数名"],
+        answer: 0
+      },
+      {
+        q: "当一次出现多个 DTC 状态变化时，队列的作用是什么？",
+        options: ["暂存待发送事件，后续分周期发送", "清空所有故障", "关闭 CAN 控制器", "修改链接脚本"],
+        answer: 0
+      },
+      {
+        q: "周期分频的典型目的是什么？",
+        options: ["降低执行频率，形成固定发送节奏", "让函数无法调用", "删除状态字节", "改变 DTC 码含义"],
+        answer: 0
+      },
+      {
+        q: "公开学习资料中不应该放什么？",
+        options: ["真实项目报文 ID、信号名、DTC 列表和内部编号", "通用队列思想", "状态变化检测模式", "DTC 字节拆分方法"],
+        answer: 0
+      }
+    ]
+  },
+  {
+    id: "case-rte-diag-agent",
+    kicker: "第 23 节 · 脱敏案例：RTE 与诊断代理",
+    title: "RTE/BSW 代码阅读：从生成接口到诊断状态机",
+    summary: "RTE 输出参数、MemMap、受保护区域、UDS 诊断代理",
+    body: `
+      <h3>本节为什么重要</h3>
+      <p>真实 AUTOSAR BSW 项目里，你会看到两类很典型的代码：一类是 RTE 生成框架加用户实现，另一类是按诊断流程运行的状态机模块。它们看起来宏很多、函数名很长、接口很绕，但背后的模式是可以学会的。本节只讲脱敏后的通用阅读方法。</p>
+
+      <h3>RTE/BSW 适配层常见样子</h3>
+      <p>RTE 相关代码常常由工具生成骨架，开发者在受保护区域里补充业务代码。你会看到很多宏：</p>
+      <ul>
+        <li><code>FUNC(ReturnType, MEM_CLASS)</code>：声明函数及其代码段属性。</li>
+        <li><code>VAR(Type, MEM_CLASS)</code>：声明变量及其内存类别。</li>
+        <li><code>P2VAR(Type, PTR_CLASS, MEM_CLASS)</code>：声明输出指针。</li>
+        <li><code>START_SEC_CODE</code> / <code>STOP_SEC_CODE</code>：配合 <code>MemMap.h</code> 控制代码放到指定 section。</li>
+        <li><code>PROTECTED REGION</code>：工具重新生成时保留的用户代码区域。</li>
+      </ul>
+
+      <h3>输出参数三件套</h3>
+      <p>很多 RTE 适配接口会一次输出三个东西：物理值、有效性、故障信息。比如读取一个传感器，不只是返回数值，还要告诉上层这个值是否可信，以及底层是否检测到故障。</p>
+      <pre><code>Std_ReturnType ReadSensor(
+    float32 *value,
+    boolean *isValid,
+    uint8 *faultInfo
+);</code></pre>
+      <p>读这种接口时，一定先看空指针检查是否完整。如果某个输出指针为空，函数应该返回失败或至少不写这个指针。不要为了“代码短”直接写 <code>*value = ...</code>。</p>
+
+      <h3>MemMap 的直觉</h3>
+      <p>AUTOSAR 里经常通过 <code>MemMap.h</code> 把不同模块的代码、常量、变量放到特定 section。这样做是为了配合链接脚本、Flash/RAM 布局、启动初始化、安全分区或刷写需求。你现在不必一次看懂所有 MemMap 细节，但要知道：这些宏不是装饰，它们会影响最终链接结果。</p>
+
+      <h3>诊断代理模块的典型结构</h3>
+      <p>诊断代理可以理解为一个“诊断请求转发和流程控制模块”。它可能在两个通信通道之间转发 UDS 请求和响应，也可能按固定流程执行会话切换、安全访问、例程控制、数据传输和复位。通用 UDS 服务包括：</p>
+      <ul>
+        <li><code>0x10</code> Diagnostic Session Control：切换默认/扩展/编程会话。</li>
+        <li><code>0x22</code> ReadDataByIdentifier：读取 DID，例如软件版本。</li>
+        <li><code>0x27</code> SecurityAccess：Seed/Key 安全访问。</li>
+        <li><code>0x31</code> RoutineControl：执行擦除、校验等例程。</li>
+        <li><code>0x34</code> RequestDownload、<code>0x36</code> TransferData、<code>0x37</code> RequestTransferExit：下载和传输数据。</li>
+        <li><code>0x3E</code> TesterPresent：维持诊断会话。</li>
+        <li><code>0x11</code> ECUReset：请求复位。</li>
+      </ul>
+
+      <h3>诊断代理为什么一定是状态机</h3>
+      <p>刷写或在线诊断流程不能乱序。必须先进入正确会话，再安全访问，再擦除或下载，再传输数据，再校验，再复位。每一步都有正响应、负响应、超时和重试。代码里通常会维护：</p>
+      <ul>
+        <li>当前流程状态。</li>
+        <li>当前诊断序列下标。</li>
+        <li>P2/P2* 或通用超时计数器。</li>
+        <li>请求缓存和响应缓存。</li>
+        <li>错误码、日志、重试次数。</li>
+      </ul>
+
+      <h3>读这类代码的顺序</h3>
+      <ol>
+        <li>先找公开入口：<code>Init</code>、<code>MainFunction</code>、<code>RxIndication</code>、<code>TxConfirmation</code>。</li>
+        <li>再找状态枚举：看模块有哪些大状态。</li>
+        <li>再找配置表：看每一步发送什么服务、期望什么响应。</li>
+        <li>再看定时器：超时后如何跳转，是否重试。</li>
+        <li>最后看日志和错误处理：失败后如何保存现场。</li>
+      </ol>
+
+      <div class="note">
+        <strong>读代码心法：</strong>
+        不要被长函数名和宏吓住。先找入口，再找状态，再找表，再找定时器。大多数 BSW 模块都能按这个方法拆开。
+      </div>
+
+      <h3>本节练习</h3>
+      <div class="practice">
+        <ol>
+          <li>写一个简化的传感器读取接口，输出 value/isValid/faultInfo，并检查三个指针。</li>
+          <li>画出一个简化 UDS 编程序列：扩展会话、编程会话、安全访问、下载、传输、校验、复位。</li>
+          <li>写一个状态机枚举，并用 <code>switch</code> 写出主函数骨架。</li>
+        </ol>
+      </div>
+    `,
+    quiz: [
+      {
+        q: "RTE 适配层里的 PROTECTED REGION 通常表示什么？",
+        options: ["工具再生成时应保留的用户代码区域", "Flash 擦除区域", "不能编译的注释", "CAN 报文数据场"],
+        answer: 0
+      },
+      {
+        q: "读取传感器时同时输出 value、isValid、faultInfo 的好处是什么？",
+        options: ["同时表达数值、可信度和故障信息", "让函数永远成功", "减少所有指针检查", "替代网络管理"],
+        answer: 0
+      },
+      {
+        q: "MemMap 宏主要和什么有关？",
+        options: ["代码/变量放入指定内存段", "DTC 状态字节清零", "网页登录姓名", "CAN ID 自动生成"],
+        answer: 0
+      },
+      {
+        q: "UDS 服务 0x27 通常表示什么？",
+        options: ["SecurityAccess 安全访问", "TesterPresent", "ECUReset", "读取普通 GPIO"],
+        answer: 0
+      },
+      {
+        q: "阅读诊断代理代码的推荐顺序是什么？",
+        options: ["入口、状态、配置表、定时器、错误处理", "作者、版权、项目名、公司名", "先改变量名再看逻辑", "只看最后一行"],
+        answer: 0
+      }
+    ]
   }
 ];
 
@@ -2052,6 +2350,120 @@ Std_ReturnType DidService_Read(uint16_t did, uint8_t *data, uint16_t dataSize, u
 
     return ret;
 }`
+  },
+  "case-can-nm": {
+    prompt: "写一个简化 NmDemo_MainFunction：根据本地请求、是否收到 NM、计时器是否超时进行状态跳转。",
+    starter: `#include <stdint.h>
+
+typedef enum {
+    NM_BUS_SLEEP,
+    NM_REPEAT_MESSAGE,
+    NM_NORMAL_OPERATION,
+    NM_READY_SLEEP
+} NmDemo_StateType;
+
+/* 写 NmDemo_MainFunction */`,
+    checks: ["typedef enum", "NM_BUS_SLEEP", "NM_REPEAT_MESSAGE", "NM_READY_SLEEP", "switch", "timer"],
+    reference: `typedef enum {
+    NM_BUS_SLEEP,
+    NM_REPEAT_MESSAGE,
+    NM_NORMAL_OPERATION,
+    NM_READY_SLEEP
+} NmDemo_StateType;
+
+static NmDemo_StateType nmState = NM_BUS_SLEEP;
+static uint16_t nmSilentTimer = 0U;
+
+void NmDemo_MainFunction(uint8_t localRequest, uint8_t rxNmPdu)
+{
+    switch (nmState) {
+    case NM_BUS_SLEEP:
+        if (localRequest != 0U || rxNmPdu != 0U) {
+            nmState = NM_REPEAT_MESSAGE;
+            nmSilentTimer = 0U;
+        }
+        break;
+
+    case NM_REPEAT_MESSAGE:
+        nmState = NM_NORMAL_OPERATION;
+        break;
+
+    case NM_NORMAL_OPERATION:
+        if (localRequest == 0U) {
+            nmState = NM_READY_SLEEP;
+            nmSilentTimer = 0U;
+        }
+        break;
+
+    case NM_READY_SLEEP:
+        if (localRequest != 0U || rxNmPdu != 0U) {
+            nmState = NM_REPEAT_MESSAGE;
+            nmSilentTimer = 0U;
+        } else if (nmSilentTimer >= 10U) {
+            nmState = NM_BUS_SLEEP;
+        } else {
+            nmSilentTimer++;
+        }
+        break;
+
+    default:
+        nmState = NM_BUS_SLEEP;
+        break;
+    }
+}`
+  },
+  "case-dtc-upload": {
+    prompt: "写 DtcUploadDemo_BuildFrame：把两个 DTC code 和 status 组装进 8 字节数组。",
+    starter: `#include <stdint.h>
+
+#define NULL_PTR ((void *)0)
+
+/* 写 DtcUploadDemo_BuildFrame */`,
+    checks: ["uint32_t", "uint8_t", "frame[", ">> 16", ">> 8", "status"],
+    reference: `void DtcUploadDemo_WriteOne(uint8_t *frame, uint8_t offset, uint32_t dtcCode, uint8_t status)
+{
+    if (frame != NULL_PTR) {
+        frame[offset + 0U] = (uint8_t)((dtcCode >> 16U) & 0xFFU);
+        frame[offset + 1U] = (uint8_t)((dtcCode >> 8U) & 0xFFU);
+        frame[offset + 2U] = (uint8_t)(dtcCode & 0xFFU);
+        frame[offset + 3U] = status;
+    }
+}
+
+void DtcUploadDemo_BuildFrame(uint8_t frame[8], uint32_t dtc1, uint8_t status1, uint32_t dtc2, uint8_t status2)
+{
+    if (frame != NULL_PTR) {
+        DtcUploadDemo_WriteOne(frame, 0U, dtc1, status1);
+        DtcUploadDemo_WriteOne(frame, 4U, dtc2, status2);
+    }
+}`
+  },
+  "case-rte-diag-agent": {
+    prompt: "写一个 SensorAdapter_Read：输出 value/isValid/faultInfo，要求检查所有输出指针。",
+    starter: `#include <stdint.h>
+
+#define E_OK 0U
+#define E_NOT_OK 1U
+#define NULL_PTR ((void *)0)
+typedef uint8_t Std_ReturnType;
+typedef uint8_t boolean;
+typedef float float32;
+
+/* 写 SensorAdapter_Read */`,
+    checks: ["Std_ReturnType", "value", "isValid", "faultInfo", "NULL_PTR", "E_NOT_OK"],
+    reference: `Std_ReturnType SensorAdapter_Read(float32 *value, boolean *isValid, uint8_t *faultInfo)
+{
+    Std_ReturnType ret = E_NOT_OK;
+
+    if ((value != NULL_PTR) && (isValid != NULL_PTR) && (faultInfo != NULL_PTR)) {
+        *value = 12.5f;
+        *isValid = 1U;
+        *faultInfo = 0U;
+        ret = E_OK;
+    }
+
+    return ret;
+}`
   }
 };
 
@@ -2154,6 +2566,9 @@ function updateProgress() {
 
 function getStageInfo(module) {
   const section = Number(module.kicker.match(/第\s*(\d+)\s*节/)?.[1] || 1);
+  if (section >= 21) {
+    return { key: "stage5", label: "第 21-23 节 · 脱敏工程案例导读" };
+  }
   if (section >= 16) {
     return { key: "stage4", label: "第 16-20 节 · 函数接口与模块化" };
   }

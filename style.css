@@ -837,6 +837,10 @@ html.dark .roadmap-grid p {
   border-left-color: #e05a3a;
 }
 
+.module[data-stage="stage5"] {
+  border-left-color: #0f766e;
+}
+
 .module-head {
   display: flex;
   justify-content: space-between;
@@ -861,6 +865,11 @@ html.dark .roadmap-grid p {
 .module[data-stage="stage4"] .module-head {
   background: linear-gradient(90deg, rgba(224,90,58,0.09), rgba(255,255,255,0)),
     linear-gradient(135deg, #fffcfb, #fbf5f2);
+}
+
+.module[data-stage="stage5"] .module-head {
+  background: linear-gradient(90deg, rgba(15,118,110,0.09), rgba(255,255,255,0)),
+    linear-gradient(135deg, #f8fffd, #f0f8f6);
 }
 
 .module-head::after {
@@ -906,6 +915,10 @@ html.dark .roadmap-grid p {
 
 .module[data-stage="stage4"] .module-kicker::before {
   background: linear-gradient(135deg, var(--accent-2), var(--accent-2-light));
+}
+
+.module[data-stage="stage5"] .module-kicker::before {
+  background: linear-gradient(135deg, #0f766e, #2dd4bf);
 }
 
 .done-toggle {
